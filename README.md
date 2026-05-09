@@ -1,6 +1,6 @@
 # GreenQuote
 
-Next.js App Router + Prisma/PostgreSQL vertical-slice app for solar quote pre-qualification.
+Next.js App Router + Prisma/PostgreSQL app for solar quote pre-qualification.
 
 ## Prerequisites
 - Node 20+
@@ -16,7 +16,7 @@ Next.js App Router + Prisma/PostgreSQL vertical-slice app for solar quote pre-qu
 ## Test
 - `npm run test`
 
-## Design Decisions
+## Design
 - **Vertical Slice**: domain modules in `src/modules/auth` and `src/modules/quotes`.
 - **Next.js app** only contains routing and route handlers in `src/app`.
 - **Validation**: Zod client/server.
