@@ -1,2 +1,2 @@
-# green-quote
-GreenQuote - solar financing pre-qualification
+# GreenQuote
+Minimal solar financing pre-qualification app based on Next.js and Postgressql
