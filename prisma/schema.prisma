@@ -34,9 +34,9 @@ model Quote {
   user                  User     @relation(fields: [userId], references: [id])
   address               String
   monthlyConsumptionKwh Int
-  systemSizeKw          Decimal  @db.Decimal(10,2)
-  downPayment           Decimal  @db.Decimal(10,2)
-  systemPrice           Decimal  @db.Decimal(12,2)
+  systemSizeKw          Decimal  @db.Decimal(10, 2)
+  downPayment           Decimal  @db.Decimal(10, 2)
+  systemPrice           Decimal  @db.Decimal(12, 2)
   riskBand              RiskBand
   offers                Json
   createdAt             DateTime @default(now())
