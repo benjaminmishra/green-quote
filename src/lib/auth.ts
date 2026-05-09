@@ -1,14 +1,6 @@
 import { jwtVerify } from "jose";
-import { AppRole, getPermissionsForRole } from "@/shared/rbac";
-
-export type AuthPayload = {
-  userId: string;
-  role: AppRole;
-  email?: string;
-  fullName?: string;
-  permissions?: string[];
-  realm_access?: { roles?: string[] };
-};
+import { AppRole, getPermissionsForRole, type Permission } from "@/shared/rbac";
+import type { AuthPayload } from "@/modules/auth/models/auth";
 
 export async function verifyToken(token: string) {
   const secret = new TextEncoder().encode(
@@ -20,8 +12,8 @@ export async function verifyToken(token: string) {
   const kcRoles = typed.realm_access?.roles ?? [];
   const role: AppRole =
     typed.role || (kcRoles.includes("admin") ? "ADMIN" : "USER");
-  const permissions = typed.permissions?.length
-    ? (typed.permissions as any)
+  const permissions: Permission[] = typed.permissions?.length
+    ? typed.permissions
     : getPermissionsForRole(role);
 
   return {

@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { z } from "zod";
+import type { QuoteResponse } from "../models/ui";
 
 const schema = z.object({
   fullName: z.string(),
@@ -12,8 +14,8 @@ const schema = z.object({
 });
 
 export function QuoteForm() {
-  const [res, setRes] = useState<any>();
-  async function submit(e: any) {
+  const [res, setRes] = useState<QuoteResponse | null>(null);
+  async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.currentTarget));
     const parsed = schema.parse(data);
@@ -22,7 +24,8 @@ export function QuoteForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(parsed),
     });
-    setRes(await r.json());
+    const json: QuoteResponse = await r.json();
+    setRes(json);
   }
   return (
     <div>
@@ -41,7 +44,7 @@ export function QuoteForm() {
           <p>System Price: {res.derived?.systemPrice}</p>
           <p>Risk Band: {res.derived?.riskBand}</p>
           <ul>
-            {res.offers?.map((o: any) => (
+            {res.offers?.map((o) => (
               <li key={o.termYears}>
                 {o.termYears}y - {o.monthlyPayment}
               </li>

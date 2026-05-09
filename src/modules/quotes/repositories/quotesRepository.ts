@@ -1,7 +1,9 @@
 import { prisma } from "@/shared/db";
+import type { QuoteCreateData } from "../models/repository";
 
 export const quotesRepository = {
-  create: (data: any) => prisma.quote.create({ data, include: { user: true } }),
+  create: (data: QuoteCreateData) =>
+    prisma.quote.create({ data, include: { user: true } }),
   findManyByUser: (userId: string) =>
     prisma.quote.findMany({
       where: { userId },

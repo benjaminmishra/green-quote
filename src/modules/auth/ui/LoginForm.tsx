@@ -1,8 +1,9 @@
 "use client";
 import { useForm } from "react-hook-form";
+import type { LoginFormValues } from "../models/forms";
 
 export function LoginForm() {
-  const { register, handleSubmit } = useForm<any>();
+  const { register, handleSubmit } = useForm<LoginFormValues>();
   return (
     <form
       onSubmit={handleSubmit(async (v) => {

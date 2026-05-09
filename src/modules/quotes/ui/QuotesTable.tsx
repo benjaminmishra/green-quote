@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
+import type { QuoteRow } from "../models/ui";
 
 export function QuotesTable({ admin = false }: { admin?: boolean }) {
-  const [quotes, setQuotes] = useState<any[]>([]);
+  const [quotes, setQuotes] = useState<QuoteRow[]>([]);
   const [q, setQ] = useState("");
   useEffect(() => {
     fetch("/api/quotes")
@@ -32,7 +33,7 @@ export function QuotesTable({ admin = false }: { admin?: boolean }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((x: any) => (
+          {rows.map((x) => (
             <tr key={x.id}>
               <td>{new Date(x.createdAt).toLocaleDateString()}</td>
               <td>{x.systemSizeKw}</td>
