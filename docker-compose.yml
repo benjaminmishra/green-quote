@@ -1,5 +1,21 @@
 version: "3.8"
 services:
+  app:
+    build: .
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/greenquote?schema=public
+      JWT_SECRET: dev-secret-change-me
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+      - "9229:9229"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: sh -c "npm ci && npm run dev:inspect"
+
   db:
     image: postgres:16
     environment:
@@ -10,5 +26,6 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+
 volumes:
   pgdata:

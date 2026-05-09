@@ -10,7 +10,8 @@
     "test": "vitest run",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:seed": "tsx prisma/seed.ts",
+    "dev:inspect": "NODE_OPTIONS='--inspect=0.0.0.0:9229' next dev"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",
