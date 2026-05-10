@@ -7,11 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run",
+    "test": "npm run test:unit && npm run test:integration",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
-    "dev:inspect": "NODE_OPTIONS='--inspect=0.0.0.0:9229' next dev"
+    "dev:inspect": "NODE_OPTIONS='--inspect=0.0.0.0:9229' next dev",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run -c vitest.integration.config.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",
@@ -27,11 +29,13 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@testcontainers/postgresql": "^11.14.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.14.9",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "prisma": "^5.14.0",
+    "testcontainers": "^11.14.0",
     "tsx": "^4.16.2",
     "typescript": "^5.5.2",
     "vitest": "^2.0.3"

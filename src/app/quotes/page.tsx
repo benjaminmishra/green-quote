@@ -1,6 +1,5 @@
 import { LogoutButton } from "@/modules/auth/ui/LogoutButton";
-import { QuoteForm } from "@/modules/quotes/ui/QuoteForm";
-import { QuotesTable } from "@/modules/quotes/ui/QuotesTable";
+import { QuotesDashboard } from "@/modules/quotes/ui/QuotesDashboard";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -34,8 +33,7 @@ export default async function Page() {
         <h2 style={{ margin: 0 }}>My Quotes</h2>
         <LogoutButton />
       </header>
-      <QuoteForm user={auth} />
-      <QuotesTable />
+      <QuotesDashboard user={auth} />
     </div>
   );
 }
