@@ -26,6 +26,8 @@ model User {
   role         Role     @default(USER)
   createdAt    DateTime @default(now())
   quotes       Quote[]
+
+  @@index([fullName])
 }
 
 model Quote {
@@ -40,4 +42,7 @@ model Quote {
   riskBand              RiskBand
   offers                Json
   createdAt             DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
 }

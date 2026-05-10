@@ -60,11 +60,11 @@ export function QuoteDetailsModal({
       <h2 style={{ marginTop: 0, borderBottom: "1px solid #eaeaea", paddingBottom: "12px", marginBottom: "20px" }}>
         Quote Details
       </h2>
-      
+
       {loading && <p style={{ color: "#666" }}>Loading quote details...</p>}
-      
+
       {error && <p style={{ color: "red", padding: "12px", backgroundColor: "#ffebeb", borderRadius: "4px" }}>Error: {error}</p>}
-      
+
       {!loading && !error && quote && (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
@@ -72,17 +72,17 @@ export function QuoteDetailsModal({
               <div style={{ fontSize: "12px", color: "#6b7280", textTransform: "uppercase", fontWeight: "bold" }}>System Size</div>
               <div style={{ fontSize: "18px", fontWeight: "500" }}>{quote.systemSizeKw} kW</div>
             </div>
-            
+
             <div style={{ padding: "12px", backgroundColor: "#f9fafb", borderRadius: "6px" }}>
               <div style={{ fontSize: "12px", color: "#6b7280", textTransform: "uppercase", fontWeight: "bold" }}>System Price</div>
               <div style={{ fontSize: "18px", fontWeight: "500" }}>${quote.systemPrice}</div>
             </div>
-            
+
             <div style={{ padding: "12px", backgroundColor: "#f9fafb", borderRadius: "6px" }}>
               <div style={{ fontSize: "12px", color: "#6b7280", textTransform: "uppercase", fontWeight: "bold" }}>Down Payment</div>
               <div style={{ fontSize: "18px", fontWeight: "500" }}>${quote.downPayment}</div>
             </div>
-            
+
             <div style={{ padding: "12px", backgroundColor: "#f9fafb", borderRadius: "6px" }}>
               <div style={{ fontSize: "12px", color: "#6b7280", textTransform: "uppercase", fontWeight: "bold" }}>Risk Band</div>
               <div style={{ fontSize: "18px", fontWeight: "500", color: quote.riskBand === 'A' ? 'green' : quote.riskBand === 'B' ? 'orange' : 'red' }}>
@@ -90,7 +90,7 @@ export function QuoteDetailsModal({
               </div>
             </div>
           </div>
-          
+
           <div style={{ padding: "12px", backgroundColor: "#f9fafb", borderRadius: "6px" }}>
             <div style={{ fontSize: "12px", color: "#6b7280", textTransform: "uppercase", fontWeight: "bold" }}>Address</div>
             <div style={{ fontSize: "16px" }}>{quote.address}</div>
@@ -101,12 +101,12 @@ export function QuoteDetailsModal({
             {quote.offers && quote.offers.length > 0 ? (
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {quote.offers.map((offer: any, idx: number) => (
-                  <div key={idx} style={{ 
-                    display: "flex", 
-                    justifyContent: "space-between", 
-                    padding: "12px", 
-                    border: "1px solid #e5e7eb", 
-                    borderRadius: "6px" 
+                  <div key={idx} style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    padding: "12px",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "6px"
                   }}>
                     <div>
                       <div style={{ fontWeight: "bold" }}>{offer.termYears} Years</div>
