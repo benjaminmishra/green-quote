@@ -1,9 +1,10 @@
 import { LoginForm } from "@/modules/auth/ui/LoginForm";
+import { authPageStyle } from "@/modules/auth/ui/authFormStyles";
+
 export default function Page() {
   return (
-    <div>
-      <h2>Login</h2>
+    <main style={authPageStyle}>
       <LoginForm />
-    </div>
+    </main>
   );
 }

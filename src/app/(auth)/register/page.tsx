@@ -1,9 +1,10 @@
 import { RegisterForm } from "@/modules/auth/ui/RegisterForm";
+import { authPageStyle } from "@/modules/auth/ui/authFormStyles";
+
 export default function Page() {
   return (
-    <div>
-      <h2>Register</h2>
+    <main style={authPageStyle}>
       <RegisterForm />
-    </div>
+    </main>
   );
 }

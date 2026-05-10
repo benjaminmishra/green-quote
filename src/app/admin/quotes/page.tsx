@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifyToken } from "@/lib/auth";
 import { hasPermission } from "@/shared/rbac";
+import { LogoutButton } from "@/modules/auth/ui/LogoutButton";
 import { QuotesTable } from "@/modules/quotes/ui/QuotesTable";
 
 export default async function Page() {
@@ -15,7 +16,18 @@ export default async function Page() {
   }
   return (
     <div>
-      <h2>Admin Quotes</h2>
+      <header
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 16,
+          marginBottom: 20,
+        }}
+      >
+        <h2 style={{ margin: 0 }}>Admin Quotes</h2>
+        <LogoutButton />
+      </header>
       <QuotesTable admin />
     </div>
   );
