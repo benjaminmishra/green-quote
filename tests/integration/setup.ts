@@ -9,8 +9,18 @@ export default async function setup() {
   // Set the environment variable for Prisma
   process.env.DATABASE_URL = uri;
   
-  console.log("Running Prisma db push...");
-  execSync("npx prisma db push --accept-data-loss", {
+  // Use migrate deploy so that migration SQL (including reference data INSERTs) runs
+  console.log("Running Prisma migrate deploy...");
+  execSync("npx prisma migrate deploy", {
+    env: {
+      ...process.env,
+      DATABASE_URL: uri,
+    },
+    stdio: "inherit",
+  });
+
+  // Generate client for the test environment
+  execSync("npx prisma generate", {
     env: {
       ...process.env,
       DATABASE_URL: uri,

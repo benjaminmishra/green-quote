@@ -13,6 +13,21 @@ vi.mock('@/modules/quotes/repositories/quotesRepository', () => ({
   }
 }));
 
+vi.mock('@/shared/db', () => ({
+  prisma: {
+    riskBands: {
+      findUniqueOrThrow: vi.fn().mockResolvedValue({ band: 'B', apr: 8.9 }),
+    },
+    loanTerms: {
+      findMany: vi.fn().mockResolvedValue([
+        { termYears: 5, active: true },
+        { termYears: 10, active: true },
+        { termYears: 15, active: true },
+      ]),
+    },
+  }
+}));
+
 describe('Quote Handlers', () => {
   it('postQuoteHandler returns 400 for invalid data', async () => {
     const req = new NextRequest('http://localhost/api/quotes', {
@@ -43,6 +58,6 @@ describe('Quote Handlers', () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.id).toBe('quote1');
-    expect(json.offers.length).toBeGreaterThan(0);
+    expect(json.offers.length).toBe(3);
   });
 });

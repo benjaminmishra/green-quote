@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { calculatePricing } from "../services/pricingService";
+import { calculatePricing, determineRiskBand } from "../services/pricingService";
 import { quotesRepository } from "../repositories/quotesRepository";
+import { prisma } from "@/shared/db";
 import {
   canReadQuote,
   forbidden,
@@ -34,10 +35,20 @@ export async function postQuoteHandler(req: NextRequest) {
     }
     const body = parseResult.data;
 
+    // Determine risk band (business logic stays in code)
+    const riskBand = determineRiskBand(body.monthlyConsumptionKwh, body.systemSizeKw);
+
+    // Fetch APR and active loan terms from DB
+    const riskBandRow = await prisma.riskBands.findUniqueOrThrow({ where: { band: riskBand } });
+    const loanTermRows = await prisma.loanTerms.findMany({ where: { active: true }, orderBy: { termYears: "asc" } });
+    const termOptions = loanTermRows.map(t => t.termYears);
+
     const priced = calculatePricing(
       body.systemSizeKw,
       body.monthlyConsumptionKwh,
       body.downPayment ?? 0,
+      riskBandRow.apr,
+      termOptions,
     );
     const quote = await quotesRepository.create({
       userId: auth.userId,

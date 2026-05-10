@@ -11,7 +11,7 @@ export class QuotesRepositoryError extends Error {
 export const quotesRepository = {
   async create(data: QuoteCreateData) {
     try {
-      return await prisma.quote.create({ data, include: { user: true } });
+      return await prisma.quotes.create({ data, include: { user: true } });
     } catch (err) {
       throw new QuotesRepositoryError("Failed to create quote", {
         cause: err,
@@ -21,7 +21,7 @@ export const quotesRepository = {
 
   async findManyByUser(userId: string) {
     try {
-      return await prisma.quote.findMany({
+      return await prisma.quotes.findMany({
         where: { userId },
         include: { user: true },
         orderBy: { createdAt: "desc" },
@@ -35,7 +35,7 @@ export const quotesRepository = {
 
   async findManyAll() {
     try {
-      return await prisma.quote.findMany({
+      return await prisma.quotes.findMany({
         include: { user: true },
         orderBy: { createdAt: "desc" },
       });
@@ -48,7 +48,7 @@ export const quotesRepository = {
 
   async findById(id: string) {
     try {
-      return await prisma.quote.findUnique({
+      return await prisma.quotes.findUnique({
         where: { id },
         include: { user: true },
       });

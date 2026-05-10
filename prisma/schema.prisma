@@ -18,30 +18,43 @@ enum RiskBand {
   C
 }
 
-model User {
+model Users {
   id           String   @id @default(cuid())
   email        String   @unique
   passwordHash String
   fullName     String
   role         Role     @default(USER)
   createdAt    DateTime @default(now())
-  quotes       Quote[]
+  quotes       Quotes[]
 
   @@index([fullName])
 }
 
-model Quote {
-  id                    String   @id @default(cuid())
+model RiskBands {
+  band   RiskBand @id
+  apr    Decimal  @db.Decimal(5, 2)
+  quotes Quotes[]
+}
+
+model LoanTerms {
+  id        String  @id @default(cuid())
+  termYears Int     @unique
+  active    Boolean @default(true)
+}
+
+model Quotes {
+  id                    String    @id @default(cuid())
   userId                String
-  user                  User     @relation(fields: [userId], references: [id])
+  user                  Users     @relation(fields: [userId], references: [id])
   address               String
   monthlyConsumptionKwh Int
-  systemSizeKw          Decimal  @db.Decimal(10, 2)
-  downPayment           Decimal  @db.Decimal(10, 2)
-  systemPrice           Decimal  @db.Decimal(12, 2)
+  systemSizeKw          Decimal   @db.Decimal(10, 2)
+  downPayment           Decimal   @db.Decimal(10, 2)
+  systemPrice           Decimal   @db.Decimal(12, 2)
   riskBand              RiskBand
+  riskBandRef           RiskBands @relation(fields: [riskBand], references: [band])
   offers                Json
-  createdAt             DateTime @default(now())
+  createdAt             DateTime  @default(now())
 
   @@index([userId])
   @@index([createdAt(sort: Desc)])

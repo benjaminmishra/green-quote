@@ -6,5 +6,6 @@ export default mergeConfig(vitestConfig, defineConfig({
     include: ['tests/integration/**/*.test.ts'],
     globalSetup: ['./tests/integration/setup.ts'],
     hookTimeout: 60000,
+    fileParallelism: false,
   }
 }));

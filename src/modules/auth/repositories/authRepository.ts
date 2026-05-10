@@ -18,7 +18,7 @@ function isUniqueConstraintError(err: unknown) {
 export const authRepository = {
   async findByEmail(email: string) {
     try {
-      return await prisma.user.findUnique({ where: { email } });
+      return await prisma.users.findUnique({ where: { email } });
     } catch (err) {
       throw new AuthRepositoryError("Failed to find user by email", {
         cause: err,
@@ -32,7 +32,7 @@ export const authRepository = {
     passwordHash: string;
   }) {
     try {
-      return await prisma.user.create({ data });
+      return await prisma.users.create({ data });
     } catch (err) {
       if (isUniqueConstraintError(err)) {
         throw new AuthRepositoryError("Email already used", { cause: err });

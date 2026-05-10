@@ -5,8 +5,9 @@ import { prisma } from '@/shared/db';
 
 describe('Auth Flow Integration', () => {
   beforeAll(async () => {
-    // Clear users before running tests
-    await prisma.user.deleteMany({});
+    // Clear data in FK-safe order
+    await prisma.quotes.deleteMany({});
+    await prisma.users.deleteMany({});
   });
 
   it('can register a new user, login, and receive a token', async () => {

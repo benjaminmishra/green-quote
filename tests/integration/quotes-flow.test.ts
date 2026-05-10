@@ -8,11 +8,11 @@ describe('Quotes Flow Integration', () => {
 
   beforeAll(async () => {
     // Clear data
-    await prisma.quote.deleteMany({});
-    await prisma.user.deleteMany({});
+    await prisma.quotes.deleteMany({});
+    await prisma.users.deleteMany({});
 
     // Create test user
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
         email: 'quote-test@test.com',
         fullName: 'Quote Test',
