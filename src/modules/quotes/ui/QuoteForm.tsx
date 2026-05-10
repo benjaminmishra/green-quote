@@ -13,7 +13,7 @@ const schema = z.object({
   downPayment: z.coerce.number().nonnegative().optional(),
 });
 
-export function QuoteForm() {
+export function QuoteForm({ user }: { user?: { fullName?: string | null; email?: string | null } }) {
   const [res, setRes] = useState<QuoteResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,8 +52,8 @@ export function QuoteForm() {
     <div>
       {error && <div style={{ color: "red", marginBottom: "1rem" }}>{error}</div>}
       <form onSubmit={submit}>
-        <input name="fullName" defaultValue="Current User" readOnly />
-        <input name="email" defaultValue="user@test.com" readOnly />
+        <input name="fullName" defaultValue={user?.fullName || "Current User"} readOnly />
+        <input name="email" defaultValue={user?.email || "user@test.com"} readOnly />
         <input name="address" placeholder="address" />
         <input name="monthlyConsumptionKwh" type="number" />
         <input name="systemSizeKw" type="number" step="0.01" />

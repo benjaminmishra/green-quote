@@ -68,6 +68,7 @@ export function QuotesTable({ admin = false }: { admin?: boolean }) {
           <thead style={{ backgroundColor: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
             <tr>
               <th style={{ padding: "12px 16px", fontWeight: "600", color: "#374151" }}>Date</th>
+              {admin && <th style={{ padding: "12px 16px", fontWeight: "600", color: "#374151" }}>User</th>}
               <th style={{ padding: "12px 16px", fontWeight: "600", color: "#374151" }}>Size (kW)</th>
               <th style={{ padding: "12px 16px", fontWeight: "600", color: "#374151" }}>Price</th>
               <th style={{ padding: "12px 16px", fontWeight: "600", color: "#374151" }}>Risk Band</th>
@@ -86,6 +87,11 @@ export function QuotesTable({ admin = false }: { admin?: boolean }) {
                 onMouseOut={(e) => e.currentTarget.style.backgroundColor = "transparent"}
               >
                 <td style={{ padding: "12px 16px", color: "#4b5563" }}>{new Date(x.createdAt).toLocaleDateString()}</td>
+                {admin && (
+                  <td style={{ padding: "12px 16px", color: "#4b5563", fontWeight: "500" }}>
+                    {x.user?.fullName || x.user?.email || "Unknown"}
+                  </td>
+                )}
                 <td style={{ padding: "12px 16px", color: "#4b5563" }}>{x.systemSizeKw}</td>
                 <td style={{ padding: "12px 16px", color: "#4b5563" }}>${x.systemPrice}</td>
                 <td style={{ padding: "12px 16px" }}>
@@ -120,7 +126,7 @@ export function QuotesTable({ admin = false }: { admin?: boolean }) {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={5} style={{ padding: "24px", textAlign: "center", color: "#6b7280" }}>
+                <td colSpan={admin ? 6 : 5} style={{ padding: "24px", textAlign: "center", color: "#6b7280" }}>
                   No quotes found.
                 </td>
               </tr>

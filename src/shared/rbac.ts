@@ -18,8 +18,6 @@ export type AuthContext = {
 const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
   USER: ["quotes:create", "quotes:read:own"],
   ADMIN: [
-    "quotes:create",
-    "quotes:read:own",
     "quotes:read:any",
     "admin:quotes:read",
   ],

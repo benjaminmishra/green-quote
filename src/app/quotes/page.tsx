@@ -1,8 +1,25 @@
 import { LogoutButton } from "@/modules/auth/ui/LogoutButton";
 import { QuoteForm } from "@/modules/quotes/ui/QuoteForm";
 import { QuotesTable } from "@/modules/quotes/ui/QuotesTable";
+import { cookies } from "next/headers";
+import { verifyToken } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-export default function Page() {
+export default async function Page() {
+  const token = cookies().get("token")?.value;
+  if (!token) redirect("/login");
+  
+  let auth;
+  try {
+    auth = await verifyToken(token);
+  } catch {
+    redirect("/login");
+  }
+
+  if (auth.role === "ADMIN") {
+    redirect("/admin/quotes");
+  }
+
   return (
     <div>
       <header
@@ -17,7 +34,7 @@ export default function Page() {
         <h2 style={{ margin: 0 }}>My Quotes</h2>
         <LogoutButton />
       </header>
-      <QuoteForm />
+      <QuoteForm user={auth} />
       <QuotesTable />
     </div>
   );

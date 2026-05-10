@@ -45,7 +45,12 @@ export function LoginForm() {
           return;
         }
 
-        window.location.assign("/quotes");
+        const data = await res.json().catch(() => null);
+        if (data?.role === "ADMIN") {
+          window.location.assign("/admin/quotes");
+        } else {
+          window.location.assign("/quotes");
+        }
       })}
     >
       <div style={headerStyle}>
