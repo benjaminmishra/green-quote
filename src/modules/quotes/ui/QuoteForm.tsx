@@ -15,20 +15,42 @@ const schema = z.object({
 
 export function QuoteForm() {
   const [res, setRes] = useState<QuoteResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setError(null);
+    setRes(null);
     const data = Object.fromEntries(new FormData(e.currentTarget));
-    const parsed = schema.parse(data);
-    const r = await fetch("/api/quotes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(parsed),
-    });
-    const json: QuoteResponse = await r.json();
-    setRes(json);
+    const parseResult = schema.safeParse(data);
+    
+    if (!parseResult.success) {
+      setError("Validation failed: " + parseResult.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(", "));
+      return;
+    }
+    
+    try {
+      const r = await fetch("/api/quotes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parseResult.data),
+      });
+      
+      const json = await r.json();
+      
+      if (!r.ok) {
+        setError(json.error || "Failed to submit quote");
+        return;
+      }
+      
+      setRes(json as QuoteResponse);
+    } catch (err) {
+      setError("An unexpected network error occurred");
+    }
   }
   return (
     <div>
+      {error && <div style={{ color: "red", marginBottom: "1rem" }}>{error}</div>}
       <form onSubmit={submit}>
         <input name="fullName" defaultValue="Current User" readOnly />
         <input name="email" defaultValue="user@test.com" readOnly />

@@ -20,59 +20,86 @@ const schema = z.object({
 });
 
 export async function postQuoteHandler(req: NextRequest) {
-  const auth = getAuthContextFromRequest(req);
-  if (!auth) return unauthorized();
-  if (!hasPermission(auth, "quotes:create")) return forbidden();
+  try {
+    const auth = getAuthContextFromRequest(req);
+    if (!auth) return unauthorized();
+    if (!hasPermission(auth, "quotes:create")) return forbidden();
 
-  const body = schema.parse(await req.json());
-  const priced = calculatePricing(
-    body.systemSizeKw,
-    body.monthlyConsumptionKwh,
-    body.downPayment ?? 0,
-  );
-  const quote = await quotesRepository.create({
-    userId: auth.userId,
-    address: body.address,
-    monthlyConsumptionKwh: body.monthlyConsumptionKwh,
-    systemSizeKw: body.systemSizeKw,
-    downPayment: body.downPayment ?? 0,
-    systemPrice: priced.systemPrice.toString(),
-    riskBand: priced.riskBand,
-    offers: priced.offers,
-  });
-  return NextResponse.json({
-    id: quote.id,
-    inputs: body,
-    derived: {
-      systemPrice: priced.systemPrice.toFixed(2),
+    const parseResult = schema.safeParse(await req.json());
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: parseResult.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const body = parseResult.data;
+
+    const priced = calculatePricing(
+      body.systemSizeKw,
+      body.monthlyConsumptionKwh,
+      body.downPayment ?? 0,
+    );
+    const quote = await quotesRepository.create({
+      userId: auth.userId,
+      address: body.address,
+      monthlyConsumptionKwh: body.monthlyConsumptionKwh,
+      systemSizeKw: body.systemSizeKw,
+      downPayment: body.downPayment ?? 0,
+      systemPrice: priced.systemPrice.toString(),
       riskBand: priced.riskBand,
-      principal: priced.principal.toFixed(2),
-    },
-    offers: priced.offers,
-  });
+      offers: priced.offers,
+    });
+    return NextResponse.json({
+      id: quote.id,
+      inputs: body,
+      derived: {
+        systemPrice: priced.systemPrice.toFixed(2),
+        riskBand: priced.riskBand,
+        principal: priced.principal.toFixed(2),
+      },
+      offers: priced.offers,
+    });
+  } catch (error) {
+    console.error("Error creating quote:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
 }
 
 export async function listQuotesHandler(req: NextRequest) {
-  const auth = getAuthContextFromRequest(req);
-  if (!auth) return unauthorized();
+  try {
+    const auth = getAuthContextFromRequest(req);
+    if (!auth) return unauthorized();
 
-  const canReadAny =
-    hasPermission(auth, "quotes:read:any") ||
-    hasPermission(auth, "admin:quotes:read");
-  const quotes = canReadAny
-    ? await quotesRepository.findManyAll()
-    : await quotesRepository.findManyByUser(auth.userId);
+    const canReadAny =
+      hasPermission(auth, "quotes:read:any") ||
+      hasPermission(auth, "admin:quotes:read");
+    const quotes = canReadAny
+      ? await quotesRepository.findManyAll()
+      : await quotesRepository.findManyByUser(auth.userId);
 
-  return NextResponse.json(quotes);
+    return NextResponse.json(quotes);
+  } catch (error) {
+    console.error("Error listing quotes:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
 }
 
 export async function getQuoteHandler(req: NextRequest, id: string) {
-  const auth = getAuthContextFromRequest(req);
-  if (!auth) return unauthorized();
+  try {
+    const auth = getAuthContextFromRequest(req);
+    if (!auth) return unauthorized();
 
-  const quote = await quotesRepository.findById(id);
-  if (!quote) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (!canReadQuote(auth, quote.userId)) return forbidden();
+    const quote = await quotesRepository.findById(id);
+    
+    if (!quote) 
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    
+    if (!canReadQuote(auth, quote.userId)) 
+      return forbidden();
 
-  return NextResponse.json(quote);
+    return NextResponse.json(quote);
+  } catch (error) {
+    console.error("Error getting quote:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
 }
