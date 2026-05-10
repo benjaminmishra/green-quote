@@ -8,10 +8,11 @@ Next.js App Router + Prisma/PostgreSQL app for solar quote pre-qualification.
 
 ## Setup
 1. Copy envs: `cp .env.example .env`
-2. Start DB: `docker compose up -d db`
+2. Start DB and run migrations/seed: `docker compose up`
 3. Install deps: `npm install`
-4. Prisma: `npm run prisma:generate && npm run prisma:migrate && npm run prisma:seed`
-5. Run app: `npm run dev`
+4. Run app locally: `npm run dev`
+
+To run the app through Docker instead, use `docker compose --profile app up`.
 
 ## Test
 - `npm run test`

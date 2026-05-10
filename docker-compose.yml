@@ -1,20 +1,32 @@
-version: "3.8"
 services:
   app:
     build: .
+    profiles:
+      - app
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/greenquote?schema=public
       JWT_SECRET: dev-secret-change-me
       NODE_ENV: development
     ports:
       - "3000:3000"
-      - "9229:9229"
     volumes:
       - .:/app
       - /app/node_modules
-    command: sh -c "npm ci && npm run dev:inspect"
+    command: sh -c "npm ci && npm run dev -- -H 0.0.0.0"
+
+  migrator:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/greenquote?schema=public
+    command: sh -c "npx prisma migrate deploy && npm run prisma:seed"
 
   db:
     image: postgres:16
@@ -22,6 +34,11 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: greenquote
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d greenquote"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     ports:
       - "5432:5432"
     volumes:
