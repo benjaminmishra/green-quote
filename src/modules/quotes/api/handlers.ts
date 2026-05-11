@@ -10,6 +10,8 @@ import {
   hasPermission,
   unauthorized,
 } from "@/shared/rbac";
+import { getLogger } from "@/shared/logger";
+import { withLogging } from "@/shared/withLogging";
 
 const schema = z.object({
   fullName: z.string().min(1),
@@ -20,11 +22,12 @@ const schema = z.object({
   downPayment: z.number().nonnegative().optional().default(0),
 });
 
-export async function postQuoteHandler(req: NextRequest) {
+export const postQuoteHandler = withLogging(async function (req: NextRequest) {
   try {
     const auth = getAuthContextFromRequest(req);
     if (!auth) return unauthorized();
     if (!hasPermission(auth, "quotes:create")) return forbidden();
+    getLogger().info({ "user.id": auth.userId, msg: "Attempting to create quote" });
 
     const parseResult = schema.safeParse(await req.json());
     if (!parseResult.success) {
@@ -35,7 +38,6 @@ export async function postQuoteHandler(req: NextRequest) {
     }
     const body = parseResult.data;
 
-    // Determine risk band (business logic stays in code)
     const riskBand = determineRiskBand(body.monthlyConsumptionKwh, body.systemSizeKw);
 
     // Fetch APR and active loan terms from DB
@@ -60,6 +62,7 @@ export async function postQuoteHandler(req: NextRequest) {
       riskBand: priced.riskBand,
       offers: priced.offers,
     });
+    getLogger().info({ "user.id": auth.userId, quoteId: quote.id, msg: "Quote successfully created" });
     return NextResponse.json({
       id: quote.id,
       inputs: body,
@@ -71,15 +74,16 @@ export async function postQuoteHandler(req: NextRequest) {
       offers: priced.offers,
     });
   } catch (error) {
-    console.error("Error creating quote:", error);
+    getLogger().error({ err: error, msg: "Error creating quote" });
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-}
+});
 
-export async function listQuotesHandler(req: NextRequest) {
+export const listQuotesHandler = withLogging(async function (req: NextRequest) {
   try {
     const auth = getAuthContextFromRequest(req);
     if (!auth) return unauthorized();
+    getLogger().info({ "user.id": auth.userId, msg: "Listing quotes" });
 
     const canReadAny =
       hasPermission(auth, "quotes:read:any") ||
@@ -90,27 +94,28 @@ export async function listQuotesHandler(req: NextRequest) {
 
     return NextResponse.json(quotes);
   } catch (error) {
-    console.error("Error listing quotes:", error);
+    getLogger().error({ err: error, msg: "Error listing quotes" });
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-}
+});
 
-export async function getQuoteHandler(req: NextRequest, id: string) {
+export const getQuoteHandler = withLogging(async function (req: NextRequest, id: string) {
   try {
     const auth = getAuthContextFromRequest(req);
     if (!auth) return unauthorized();
+    getLogger().info({ "user.id": auth.userId, quoteId: id, msg: "Getting quote" });
 
     const quote = await quotesRepository.findById(id);
-    
-    if (!quote) 
+
+    if (!quote)
       return NextResponse.json({ error: "Not found" }, { status: 404 });
-    
-    if (!canReadQuote(auth, quote.userId)) 
+
+    if (!canReadQuote(auth, quote.userId))
       return forbidden();
 
     return NextResponse.json(quote);
   } catch (error) {
-    console.error("Error getting quote:", error);
+    getLogger().error({ err: error, msg: "Error getting quote" });
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-}
+});
