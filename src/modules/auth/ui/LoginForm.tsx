@@ -87,9 +87,7 @@ export function LoginForm() {
             required: "Password is required.",
           })}
         />
-        {errors.password && (
-          <p style={errorStyle}>{errors.password.message}</p>
-        )}
+        {errors.password && <p style={errorStyle}>{errors.password.message}</p>}
       </label>
 
       {error && (

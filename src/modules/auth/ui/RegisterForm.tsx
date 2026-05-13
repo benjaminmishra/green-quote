@@ -50,7 +50,9 @@ export function RegisterForm() {
     >
       <div style={headerStyle}>
         <h1 style={titleStyle}>Create account</h1>
-        <p style={subtitleStyle}>Start creating solar quote pre-qualifications.</p>
+        <p style={subtitleStyle}>
+          Start creating solar quote pre-qualifications.
+        </p>
       </div>
 
       <label style={fieldStyle}>
@@ -67,9 +69,7 @@ export function RegisterForm() {
             },
           })}
         />
-        {errors.fullName && (
-          <p style={errorStyle}>{errors.fullName.message}</p>
-        )}
+        {errors.fullName && <p style={errorStyle}>{errors.fullName.message}</p>}
       </label>
 
       <label style={fieldStyle}>
@@ -105,9 +105,7 @@ export function RegisterForm() {
             },
           })}
         />
-        {errors.password && (
-          <p style={errorStyle}>{errors.password.message}</p>
-        )}
+        {errors.password && <p style={errorStyle}>{errors.password.message}</p>}
       </label>
 
       {error && (

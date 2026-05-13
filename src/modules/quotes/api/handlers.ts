@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { calculatePricing, determineRiskBand } from "../services/pricingService";
+import {
+  calculatePricing,
+  determineRiskBand,
+} from "../services/pricingService";
 import { quotesRepository } from "../repositories/quotesRepository";
-import { prisma } from "@/shared/db";
+import { configRepository } from "../repositories/configRepository";
 import {
   canReadQuote,
   forbidden,
@@ -26,24 +29,40 @@ export const postQuoteHandler = withLogging(async function (req: NextRequest) {
   try {
     const auth = getAuthContextFromRequest(req);
     if (!auth) return unauthorized();
-    if (!hasPermission(auth, "quotes:create")) return forbidden();
-    getLogger().info({ "user.id": auth.userId, msg: "Attempting to create quote" });
 
-    const parseResult = schema.safeParse(await req.json());
+    if (!hasPermission(auth, "quotes:create")) return forbidden();
+
+    getLogger().info({
+      "user.id": auth.userId,
+      msg: "Attempting to create quote",
+    });
+
+    let rawBody;
+    try {
+      rawBody = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON payload" },
+        { status: 400 },
+      );
+    }
+    const parseResult = schema.safeParse(rawBody);
     if (!parseResult.success) {
       return NextResponse.json(
         { error: "Validation failed", details: parseResult.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const body = parseResult.data;
 
-    const riskBand = determineRiskBand(body.monthlyConsumptionKwh, body.systemSizeKw);
+    const riskBand = determineRiskBand(
+      body.monthlyConsumptionKwh,
+      body.systemSizeKw,
+    );
 
-    // Fetch APR and active loan terms from DB
-    const riskBandRow = await prisma.riskBands.findUniqueOrThrow({ where: { band: riskBand } });
-    const loanTermRows = await prisma.loanTerms.findMany({ where: { active: true }, orderBy: { termYears: "asc" } });
-    const termOptions = loanTermRows.map(t => t.termYears);
+    const riskBandRow = await configRepository.findRiskBand(riskBand);
+    const loanTermRows = await configRepository.findActiveLoanTerms();
+    const termOptions = loanTermRows.map((t) => t.termYears);
 
     const priced = calculatePricing(
       body.systemSizeKw,
@@ -62,7 +81,11 @@ export const postQuoteHandler = withLogging(async function (req: NextRequest) {
       riskBand: priced.riskBand,
       offers: priced.offers,
     });
-    getLogger().info({ "user.id": auth.userId, quoteId: quote.id, msg: "Quote successfully created" });
+    getLogger().info({
+      "user.id": auth.userId,
+      quoteId: quote.id,
+      msg: "Quote successfully created",
+    });
     return NextResponse.json({
       id: quote.id,
       inputs: body,
@@ -75,7 +98,11 @@ export const postQuoteHandler = withLogging(async function (req: NextRequest) {
     });
   } catch (error) {
     getLogger().error({ err: error, msg: "Error creating quote" });
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 });
 
@@ -95,27 +122,43 @@ export const listQuotesHandler = withLogging(async function (req: NextRequest) {
     return NextResponse.json(quotes);
   } catch (error) {
     getLogger().error({ err: error, msg: "Error listing quotes" });
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 });
 
-export const getQuoteHandler = withLogging(async function (req: NextRequest, id: string) {
+export const getQuoteHandler = withLogging(async function (
+  req: NextRequest,
+  ...args: unknown[]
+) {
+  const id = args[0];
+  if (typeof id !== "string" || !id) {
+    return NextResponse.json({ error: "Missing quote id" }, { status: 400 });
+  }
   try {
     const auth = getAuthContextFromRequest(req);
     if (!auth) return unauthorized();
-    getLogger().info({ "user.id": auth.userId, quoteId: id, msg: "Getting quote" });
+    getLogger().info({
+      "user.id": auth.userId,
+      quoteId: id,
+      msg: "Getting quote",
+    });
 
     const quote = await quotesRepository.findById(id);
 
     if (!quote)
       return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    if (!canReadQuote(auth, quote.userId))
-      return forbidden();
+    if (!canReadQuote(auth, quote.userId)) return forbidden();
 
     return NextResponse.json(quote);
   } catch (error) {
     getLogger().error({ err: error, msg: "Error getting quote" });
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 });

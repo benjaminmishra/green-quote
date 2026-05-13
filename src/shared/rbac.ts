@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 export type AppRole = "USER" | "ADMIN";
-export type Permission =
-  | "quotes:create"
-  | "quotes:read:own"
-  | "quotes:read:any"
-  | "admin:quotes:read";
+
+export const PERMISSION_VALUES = [
+  "quotes:create",
+  "quotes:read:own",
+  "quotes:read:any",
+  "admin:quotes:read",
+] as const;
+
+export type Permission = (typeof PERMISSION_VALUES)[number];
 
 export type AuthContext = {
   userId: string;
@@ -15,12 +20,17 @@ export type AuthContext = {
   permissions: Permission[];
 };
 
+const authContextSchema = z.object({
+  userId: z.string(),
+  role: z.enum(["USER", "ADMIN"]),
+  email: z.string().optional(),
+  fullName: z.string().optional(),
+  permissions: z.array(z.enum(PERMISSION_VALUES)),
+});
+
 const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
   USER: ["quotes:create", "quotes:read:own"],
-  ADMIN: [
-    "quotes:read:any",
-    "admin:quotes:read",
-  ],
+  ADMIN: ["quotes:read:any", "admin:quotes:read"],
 };
 
 export function getPermissionsForRole(role: AppRole): Permission[] {
@@ -44,7 +54,7 @@ export function getAuthContextFromRequest(
   const raw = req.headers.get("x-auth-context");
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as AuthContext;
+    return authContextSchema.parse(JSON.parse(raw));
   } catch {
     return null;
   }

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { authService } from "../services/authService";
+import { withLogging } from "@/shared/withLogging";
+import { AUTH_COOKIE_OPTIONS } from "@/shared/cookieOptions";
 
 const schema = z.object({
   fullName: z.string().trim().min(1),
@@ -10,9 +12,18 @@ const schema = z.object({
 
 const loginSchema = schema.pick({ email: true, password: true });
 
-export async function registerHandler(req: NextRequest) {
+export const registerHandler = withLogging(async function (req: NextRequest) {
   try {
-    const data = schema.parse(await req.json());
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON payload" },
+        { status: 400 },
+      );
+    }
+    const data = schema.parse(body);
     const user = await authService.register(
       data.fullName,
       data.email,
@@ -37,10 +48,26 @@ export async function registerHandler(req: NextRequest) {
 
     return NextResponse.json({ error: message }, { status });
   }
-}
+});
 
-export async function loginHandler(req: NextRequest) {
-  const data = loginSchema.parse(await req.json());
+export const loginHandler = withLogging(async function (req: NextRequest) {
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid JSON payload" },
+      { status: 400 },
+    );
+  }
+  const parseResult = loginSchema.safeParse(body);
+  if (!parseResult.success) {
+    return NextResponse.json(
+      { error: "Please enter a valid email and password." },
+      { status: 400 },
+    );
+  }
+  const data = parseResult.data;
 
   try {
     const { token, user } = await authService.login(data.email, data.password);
@@ -52,12 +79,7 @@ export async function loginHandler(req: NextRequest) {
       role: user.role,
     });
 
-    res.cookies.set("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-    });
+    res.cookies.set("token", token, AUTH_COOKIE_OPTIONS);
 
     return res;
   } catch (err: unknown) {
@@ -66,18 +88,12 @@ export async function loginHandler(req: NextRequest) {
 
     return NextResponse.json({ error: message }, { status });
   }
-}
+});
 
-export async function logoutHandler() {
+export const logoutHandler = withLogging(async function (req: NextRequest) {
   const res = NextResponse.json({ ok: true });
 
-  res.cookies.set("token", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    path: "/",
-    maxAge: 0,
-  });
+  res.cookies.set("token", "", { ...AUTH_COOKIE_OPTIONS, maxAge: 0 });
 
   return res;
-}
+});

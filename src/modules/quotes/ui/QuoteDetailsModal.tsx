@@ -1,6 +1,15 @@
+"use client";
 import { useEffect, useState } from "react";
 import Modal from "react-responsive-modal";
 import "react-responsive-modal/styles.css";
+import type { QuoteDetail, Offer } from "../models/ui";
+import {
+  detailsModalStyle,
+  detailsOfferCardStyle,
+  detailsStatCardStyle,
+  detailsStatLabelStyle,
+  detailsStatValueStyle,
+} from "./quoteStyles";
 
 export function QuoteDetailsModal({
   quoteId,
@@ -11,7 +20,7 @@ export function QuoteDetailsModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const [quote, setQuote] = useState<any>(null);
+  const [quote, setQuote] = useState<QuoteDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,80 +56,139 @@ export function QuoteDetailsModal({
       open={isOpen}
       onClose={onClose}
       center
-      styles={{
-        modal: {
-          borderRadius: "8px",
-          padding: "24px",
-          minWidth: "400px",
-          fontFamily: "sans-serif",
-          boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)"
-        },
-      }}
+      styles={detailsModalStyle}
     >
-      <h2 style={{ marginTop: 0, borderBottom: "1px solid #eaeaea", paddingBottom: "12px", marginBottom: "20px" }}>
+      <h2
+        style={{
+          marginTop: 0,
+          borderBottom: "1px solid #eaeaea",
+          paddingBottom: "12px",
+          marginBottom: "20px",
+        }}
+      >
         Quote Details
       </h2>
 
       {loading && <p style={{ color: "#666" }}>Loading quote details...</p>}
 
-      {error && <p style={{ color: "red", padding: "12px", backgroundColor: "#ffebeb", borderRadius: "4px" }}>Error: {error}</p>}
+      {error && (
+        <p
+          style={{
+            color: "red",
+            padding: "12px",
+            backgroundColor: "#ffebeb",
+            borderRadius: "4px",
+          }}
+        >
+          Error: {error}
+        </p>
+      )}
 
       {!loading && !error && quote && (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            <div style={{ padding: "12px", backgroundColor: "#f9fafb", borderRadius: "6px" }}>
-              <div style={{ fontSize: "12px", color: "#6b7280", textTransform: "uppercase", fontWeight: "bold" }}>System Size</div>
-              <div style={{ fontSize: "18px", fontWeight: "500" }}>{quote.systemSizeKw} kW</div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "12px",
+            }}
+          >
+            <div style={detailsStatCardStyle}>
+              <div style={detailsStatLabelStyle}>
+                System Size
+              </div>
+              <div style={detailsStatValueStyle}>
+                {quote.systemSizeKw} kW
+              </div>
             </div>
 
-            <div style={{ padding: "12px", backgroundColor: "#f9fafb", borderRadius: "6px" }}>
-              <div style={{ fontSize: "12px", color: "#6b7280", textTransform: "uppercase", fontWeight: "bold" }}>System Price</div>
-              <div style={{ fontSize: "18px", fontWeight: "500" }}>${quote.systemPrice}</div>
+            <div style={detailsStatCardStyle}>
+              <div style={detailsStatLabelStyle}>
+                System Price
+              </div>
+              <div style={detailsStatValueStyle}>
+                ${quote.systemPrice}
+              </div>
             </div>
 
-            <div style={{ padding: "12px", backgroundColor: "#f9fafb", borderRadius: "6px" }}>
-              <div style={{ fontSize: "12px", color: "#6b7280", textTransform: "uppercase", fontWeight: "bold" }}>Down Payment</div>
-              <div style={{ fontSize: "18px", fontWeight: "500" }}>${quote.downPayment}</div>
+            <div style={detailsStatCardStyle}>
+              <div style={detailsStatLabelStyle}>
+                Down Payment
+              </div>
+              <div style={detailsStatValueStyle}>
+                ${quote.downPayment}
+              </div>
             </div>
 
-            <div style={{ padding: "12px", backgroundColor: "#f9fafb", borderRadius: "6px" }}>
-              <div style={{ fontSize: "12px", color: "#6b7280", textTransform: "uppercase", fontWeight: "bold" }}>Risk Band</div>
-              <div style={{ fontSize: "18px", fontWeight: "500", color: quote.riskBand === 'A' ? 'green' : quote.riskBand === 'B' ? 'orange' : 'red' }}>
+            <div style={detailsStatCardStyle}>
+              <div style={detailsStatLabelStyle}>
+                Risk Band
+              </div>
+              <div
+                style={{
+                  ...detailsStatValueStyle,
+                  color:
+                    quote.riskBand === "A"
+                      ? "green"
+                      : quote.riskBand === "B"
+                        ? "orange"
+                        : "red",
+                }}
+              >
                 {quote.riskBand}
               </div>
             </div>
           </div>
 
-          <div style={{ padding: "12px", backgroundColor: "#f9fafb", borderRadius: "6px" }}>
-            <div style={{ fontSize: "12px", color: "#6b7280", textTransform: "uppercase", fontWeight: "bold" }}>Address</div>
+          <div style={detailsStatCardStyle}>
+            <div style={detailsStatLabelStyle}>
+              Address
+            </div>
             <div style={{ fontSize: "16px" }}>{quote.address}</div>
           </div>
 
           <div>
-            <h3 style={{ fontSize: "16px", marginTop: "12px", marginBottom: "12px" }}>Financing Offers</h3>
+            <h3
+              style={{
+                fontSize: "16px",
+                marginTop: "12px",
+                marginBottom: "12px",
+              }}
+            >
+              Financing Offers
+            </h3>
             {quote.offers && quote.offers.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {quote.offers.map((offer: any, idx: number) => (
-                  <div key={idx} style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    padding: "12px",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "6px"
-                  }}>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+              >
+                {quote.offers.map((offer: Offer, idx: number) => (
+                  <div
+                    key={idx}
+                    style={detailsOfferCardStyle}
+                  >
                     <div>
-                      <div style={{ fontWeight: "bold" }}>{offer.termYears} Years</div>
-                      <div style={{ fontSize: "14px", color: "#6b7280" }}>APR: {offer.apr}%</div>
+                      <div style={{ fontWeight: "bold" }}>
+                        {offer.termYears} Years
+                      </div>
+                      <div style={{ fontSize: "14px", color: "#6b7280" }}>
+                        APR: {offer.apr}%
+                      </div>
                     </div>
                     <div style={{ textAlign: "right" }}>
-                      <div style={{ fontWeight: "bold", color: "#059669" }}>${offer.monthlyPayment} / mo</div>
-                      <div style={{ fontSize: "14px", color: "#6b7280" }}>Principal: ${offer.principalUsed}</div>
+                      <div style={{ fontWeight: "bold", color: "#059669" }}>
+                        ${offer.monthlyPayment} / mo
+                      </div>
+                      <div style={{ fontSize: "14px", color: "#6b7280" }}>
+                        Principal: ${offer.principalUsed}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p style={{ color: "#6b7280", fontStyle: "italic" }}>No financing offers available.</p>
+              <p style={{ color: "#6b7280", fontStyle: "italic" }}>
+                No financing offers available.
+              </p>
             )}
           </div>
         </div>

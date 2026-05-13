@@ -5,10 +5,10 @@ export default async function setup() {
   console.log("Starting PostgreSQL Testcontainer...");
   const container = await new PostgreSqlContainer("postgres:16-alpine").start();
   const uri = container.getConnectionUri();
-  
+
   // Set the environment variable for Prisma
   process.env.DATABASE_URL = uri;
-  
+
   // Use migrate deploy so that migration SQL (including reference data INSERTs) runs
   console.log("Running Prisma migrate deploy...");
   execSync("npx prisma migrate deploy", {

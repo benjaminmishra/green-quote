@@ -1,18 +1,28 @@
 import { jwtVerify } from "jose";
-import { AppRole, getPermissionsForRole, type Permission } from "@/shared/rbac";
-import type { AuthPayload } from "@/modules/auth/models/auth";
+import { z } from "zod";
+import { AppRole, getPermissionsForRole, PERMISSION_VALUES } from "@/shared/rbac";
+
+const payloadSchema = z.object({
+  userId: z.string(),
+  role: z.enum(["USER", "ADMIN"]).optional(),
+  email: z.string().optional(),
+  fullName: z.string().optional(),
+  permissions: z.array(z.enum(PERMISSION_VALUES)).optional(),
+  realm_access: z.object({ roles: z.array(z.string()).optional() }).optional(),
+});
 
 export async function verifyToken(token: string) {
-  const secret = new TextEncoder().encode(
-    process.env.JWT_SECRET || "change-me",
-  );
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET environment variable is not set");
+  }
+  const secret = new TextEncoder().encode(process.env.JWT_SECRET);
   const { payload } = await jwtVerify(token, secret);
-  const typed = payload as unknown as AuthPayload;
+  const typed = payloadSchema.parse(payload);
 
   const kcRoles = typed.realm_access?.roles ?? [];
   const role: AppRole =
     typed.role || (kcRoles.includes("admin") ? "ADMIN" : "USER");
-  const permissions: Permission[] = typed.permissions?.length
+  const permissions = typed.permissions?.length
     ? typed.permissions
     : getPermissionsForRole(role);
 

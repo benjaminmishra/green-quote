@@ -1,17 +1,13 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/shared/db";
 
-export class AuthRepositoryError extends Error {
-  constructor(message: string, options?: { cause?: unknown }) {
-    super(message, options);
-    this.name = "AuthRepositoryError";
-  }
-}
+import { RepositoryError } from "@/shared/errors";
+
+export class AuthRepositoryError extends RepositoryError {}
 
 function isUniqueConstraintError(err: unknown) {
   return (
-    err instanceof Prisma.PrismaClientKnownRequestError &&
-    err.code === "P2002"
+    err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002"
   );
 }
 

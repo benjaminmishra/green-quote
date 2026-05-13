@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { loggerAls, logger } from "./logger";
 import { randomUUID } from "node:crypto";
 
-export function withLogging(handler: Function) {
-  return async (req: NextRequest, ...args: any[]) => {
+type RouteHandler = (
+  req: NextRequest,
+  ...args: unknown[]
+) => Promise<NextResponse>;
+
+export function withLogging(handler: RouteHandler) {
+  return async (req: NextRequest, ...args: unknown[]) => {
     const traceId = req.headers.get("x-trace-id") || randomUUID();
     const childLogger = logger.child({ trace_id: traceId });
 
@@ -31,7 +36,10 @@ export function withLogging(handler: Function) {
           err: error,
           duration_ms: duration,
         });
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json(
+          { error: "Internal Server Error" },
+          { status: 500 },
+        );
       }
     });
   };

@@ -1,12 +1,9 @@
 import { prisma } from "@/shared/db";
 import type { QuoteCreateData } from "../models/repository";
 
-export class QuotesRepositoryError extends Error {
-  constructor(message: string, options?: { cause?: unknown }) {
-    super(message, options);
-    this.name = "QuotesRepositoryError";
-  }
-}
+import { RepositoryError } from "@/shared/errors";
+
+export class QuotesRepositoryError extends RepositoryError {}
 
 export const quotesRepository = {
   async create(data: QuoteCreateData) {

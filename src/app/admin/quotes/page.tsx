@@ -1,19 +1,12 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { verifyToken } from "@/lib/auth";
+import { getAuthOrRedirect } from "@/lib/getAuthOrRedirect";
 import { hasPermission } from "@/shared/rbac";
 import { LogoutButton } from "@/modules/auth/ui/LogoutButton";
 import { QuotesTable } from "@/modules/quotes/ui/QuotesTable";
 
 export default async function Page() {
-  const token = cookies().get("token")?.value;
-  if (!token) redirect("/login");
-  try {
-    const auth = await verifyToken(token!);
-    if (!hasPermission(auth, "admin:quotes:read")) redirect("/quotes");
-  } catch {
-    redirect("/login");
-  }
+  const auth = await getAuthOrRedirect();
+  if (!hasPermission(auth, "admin:quotes:read")) redirect("/quotes");
   return (
     <div>
       <header

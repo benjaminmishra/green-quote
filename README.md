@@ -3,10 +3,12 @@
 Next.js App Router + Prisma/PostgreSQL app for solar quote pre-qualification.
 
 ## Prerequisites
+
 - Node 20+
 - Docker
 
 ## Setup
+
 1. Copy envs: `cp .env.example .env`
 2. Start DB and run migrations/seed: `docker compose up`
 3. Install deps: `npm install`
@@ -15,9 +17,11 @@ Next.js App Router + Prisma/PostgreSQL app for solar quote pre-qualification.
 To run the app through Docker instead, use `docker compose --profile app up`.
 
 ## Test
+
 - `npm run test`
 
 ## Design
+
 - **Vertical Slice**: domain modules in `src/modules/auth` and `src/modules/quotes`.
 - **Next.js app** only contains routing and route handlers in `src/app`.
 - **Validation**: Zod client/server.
@@ -25,6 +29,7 @@ To run the app through Docker instead, use `docker compose --profile app up`.
 - **Auth**: email/password + JWT in secure HttpOnly cookie.
 
 ## API Reference
+
 - `GET /api/health`
 - `POST /api/auth/register`
 - `POST /api/auth/login`
@@ -32,8 +37,8 @@ To run the app through Docker instead, use `docker compose --profile app up`.
 - `GET /api/quotes`
 - `GET /api/quotes/:id`
 
-
 ## RBAC
+
 - Roles: `USER`, `ADMIN`.
 - Permission-based checks are used (`quotes:create`, `quotes:read:own`, `quotes:read:any`, `admin:quotes:read`).
 - JWT payload supports future Keycloak-style claims mapping (`realm_access.roles`) in `verifyToken`.

@@ -1,19 +1,9 @@
 import { LogoutButton } from "@/modules/auth/ui/LogoutButton";
 import { QuotesDashboard } from "@/modules/quotes/ui/QuotesDashboard";
-import { cookies } from "next/headers";
-import { verifyToken } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import { getAuthOrRedirect } from "@/lib/getAuthOrRedirect";
 
 export default async function Page() {
-  const token = cookies().get("token")?.value;
-  if (!token) redirect("/login");
-  
-  let auth;
-  try {
-    auth = await verifyToken(token);
-  } catch {
-    redirect("/login");
-  }
+  const auth = await getAuthOrRedirect();
 
   if (auth.role === "ADMIN") {
     redirect("/admin/quotes");

@@ -1,19 +1,35 @@
-import bcrypt from 'bcryptjs';
-import { SignJWT } from 'jose';
-import { authRepository } from '../repositories/authRepository';
+import bcrypt from "bcryptjs";
+import { SignJWT } from "jose";
+import { authRepository } from "../repositories/authRepository";
 
 export const authService = {
+
+  /*
+    Creates a new user in the database
+    @param fullName - The full name of the user
+    @param email - The email address of the user
+    @param password - The password of the user
+    @returns The created user
+    @throws Error if the email already exists
+  */
   async register(fullName: string, email: string, password: string) {
     const existing = await authRepository.findByEmail(email);
 
     if (existing)
-      throw new Error('Email already used');
+      throw new Error("Email already used");
 
     const passwordHash = await bcrypt.hash(password, 10);
 
     return authRepository.createUser({ fullName, email, passwordHash });
   },
 
+  /*
+    Logs in a user
+    @param email - The email address of the user
+    @param password - The password of the user
+    @returns The created user and token
+    @throws Error if the email or password is incorrect
+  */
   async login(email: string, password: string) {
     const user = await authRepository.findByEmail(email);
 
@@ -22,19 +38,25 @@ export const authService = {
 
     const isPasswordMatch = await bcrypt.compare(password, user.passwordHash);
 
-    if (!isPasswordMatch)
-      throw new Error('Invalid credentials');
+    if (!isPasswordMatch) throw new Error("Invalid credentials");
 
     if (process.env.JWT_SECRET === undefined)
-      throw new Error("Invalid JWT_SECRET, please set it up in the configuration");
+      throw new Error(
+        "Invalid JWT_SECRET, please set it up in the configuration",
+      );
 
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-    const token = await new SignJWT({ userId: user.id, role: user.role, email: user.email, fullName: user.fullName })
-      .setProtectedHeader({ alg: 'HS256' })
+    const token = await new SignJWT({
+      userId: user.id,
+      role: user.role,
+      email: user.email,
+      fullName: user.fullName,
+    })
+      .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
-      .setExpirationTime('1d')
+      .setExpirationTime("1d")
       .sign(secret);
 
     return { user, token };
-  }
+  },
 };

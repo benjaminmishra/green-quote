@@ -8,7 +8,17 @@ const isProduction = process.env.NODE_ENV === "production";
 export const logger = pino({
   level: isProduction ? "info" : "debug",
   redact: {
-    paths: ["email", "password", "address", "user.email", "user.password", "user.address", "*.email", "*.password", "*.address"],
+    paths: [
+      "email",
+      "password",
+      "address",
+      "user.email",
+      "user.password",
+      "user.address",
+      "*.email",
+      "*.password",
+      "*.address",
+    ],
     censor: "[REDACTED]",
   },
   serializers: {

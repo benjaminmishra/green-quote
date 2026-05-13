@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { calculatePricing, determineRiskBand } from "@/modules/quotes/services/pricingService";
+import {
+  calculatePricing,
+  determineRiskBand,
+} from "@/modules/quotes/services/pricingService";
 
 describe("determineRiskBand", () => {
   it("returns A for high consumption and small system", () => {
@@ -35,5 +38,14 @@ describe("calculatePricing", () => {
   it("respects down payment", () => {
     const r = calculatePricing(6, 400, 1000, 6.9, [10]);
     expect(r.principal.toNumber()).toBe(6200);
+  });
+  it("handles zero APR without division error", () => {
+    const r = calculatePricing(5, 300, 0, 0, [10]);
+    expect(r.offers.length).toBe(1);
+    expect(Number(r.offers[0].monthlyPayment)).toBeGreaterThan(0);
+  });
+  it("clamps principal to zero when down payment exceeds system price", () => {
+    const r = calculatePricing(5, 400, 99999, 6.9, [10]);
+    expect(r.principal.toNumber()).toBe(0);
   });
 });
