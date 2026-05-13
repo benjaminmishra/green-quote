@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   calculatePricing,
   determineRiskBand,
+  PricingServiceError,
 } from "../services/pricingService";
 import { quotesRepository } from "../repositories/quotesRepository";
 import { configRepository } from "../repositories/configRepository";
@@ -15,6 +16,7 @@ import {
 } from "@/shared/rbac";
 import { getLogger } from "@/shared/logger";
 import { withLogging } from "@/shared/withLogging";
+import { ServiceError } from "@/shared/errors";
 
 const schema = z.object({
   fullName: z.string().min(1),
@@ -97,6 +99,11 @@ export const postQuoteHandler = withLogging(async function (req: NextRequest) {
       offers: priced.offers,
     });
   } catch (error) {
+    if (error instanceof ServiceError) {
+      getLogger().warn({ err: error, msg: "Service error creating quote" });
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
     getLogger().error({ err: error, msg: "Error creating quote" });
 
     return NextResponse.json(

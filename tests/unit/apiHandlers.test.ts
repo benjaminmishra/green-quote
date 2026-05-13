@@ -12,6 +12,7 @@ import {
 } from "@/shared/rbac";
 import { quotesRepository } from "@/modules/quotes/repositories/quotesRepository";
 import { configRepository } from "@/modules/quotes/repositories/configRepository";
+import { ServiceError } from "@/shared/errors";
 
 // Mock the RBAC module
 vi.mock("@/shared/rbac", async (importOriginal) => {
@@ -125,6 +126,27 @@ describe("Quote Handlers", () => {
       });
       const res = await postQuoteHandler(req);
       expect(res.status).toBe(500);
+    });
+
+    it("returns 400 if a ServiceError is thrown", async () => {
+      vi.mocked(configRepository.findRiskBand).mockRejectedValue(
+        new ServiceError("Business logic failed"),
+      );
+      const req = new NextRequest("http://localhost/api/quotes", {
+        method: "POST",
+        body: JSON.stringify({
+          fullName: "Test User",
+          email: "test@test.com",
+          address: "123",
+          monthlyConsumptionKwh: 1000,
+          systemSizeKw: 5,
+          downPayment: 1000,
+        }),
+      });
+      const res = await postQuoteHandler(req);
+      expect(res.status).toBe(400);
+      const json = await res.json();
+      expect(json.error).toBe("Business logic failed");
     });
 
     it("returns 200 for valid data", async () => {

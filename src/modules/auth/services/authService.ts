@@ -1,6 +1,9 @@
 import bcrypt from "bcryptjs";
 import { SignJWT } from "jose";
 import { authRepository } from "../repositories/authRepository";
+import { ServiceError } from "@/shared/errors";
+
+export class AuthServiceError extends ServiceError {}
 
 export const authService = {
 
@@ -16,7 +19,7 @@ export const authService = {
     const existing = await authRepository.findByEmail(email);
 
     if (existing)
-      throw new Error("Email already used");
+      throw new AuthServiceError("Email already used");
 
     const passwordHash = await bcrypt.hash(password, 10);
 
@@ -34,11 +37,11 @@ export const authService = {
     const user = await authRepository.findByEmail(email);
 
     if (user === null)
-      throw new Error("Invalid credentials");
+      throw new AuthServiceError("Invalid credentials");
 
     const isPasswordMatch = await bcrypt.compare(password, user.passwordHash);
 
-    if (!isPasswordMatch) throw new Error("Invalid credentials");
+    if (!isPasswordMatch) throw new AuthServiceError("Invalid credentials");
 
     if (process.env.JWT_SECRET === undefined)
       throw new Error(

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { authService } from "@/modules/auth/services/authService";
+import { authService, AuthServiceError } from "@/modules/auth/services/authService";
 import { authRepository } from "@/modules/auth/repositories/authRepository";
 import bcrypt from "bcryptjs";
 import { jwtVerify } from "jose";
@@ -32,7 +32,7 @@ describe("authService", () => {
 
       await expect(
         authService.register("John Doe", "john@test.com", "password123"),
-      ).rejects.toThrow("Email already used");
+      ).rejects.toThrowError(AuthServiceError);
     });
 
     it("creates a user with hashed password", async () => {
@@ -62,8 +62,8 @@ describe("authService", () => {
   describe("login", () => {
     it("throws on invalid email", async () => {
       vi.mocked(authRepository.findByEmail).mockResolvedValue(null);
-      await expect(authService.login("wrong@test.com", "pwd")).rejects.toThrow(
-        "Invalid credentials",
+      await expect(authService.login("wrong@test.com", "pwd")).rejects.toThrowError(
+        AuthServiceError,
       );
     });
 
@@ -72,8 +72,8 @@ describe("authService", () => {
         passwordHash: "hash",
       } as any);
       vi.mocked(bcrypt.compare).mockResolvedValue(false as any);
-      await expect(authService.login("john@test.com", "wrong")).rejects.toThrow(
-        "Invalid credentials",
+      await expect(authService.login("john@test.com", "wrong")).rejects.toThrowError(
+        AuthServiceError,
       );
     });
 

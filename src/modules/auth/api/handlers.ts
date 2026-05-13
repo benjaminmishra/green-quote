@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { authService } from "../services/authService";
+import { authService, AuthServiceError } from "../services/authService";
 import { withLogging } from "@/shared/withLogging";
 import { AUTH_COOKIE_OPTIONS } from "@/shared/cookieOptions";
+import { getLogger } from "@/shared/logger";
 
 const schema = z.object({
   fullName: z.string().trim().min(1),
@@ -43,10 +44,17 @@ export const registerHandler = withLogging(async function (req: NextRequest) {
       );
     }
 
-    const message = err instanceof Error ? err.message : "Registration failed";
-    const status = message === "Email already used" ? 409 : 500;
+    if (err instanceof AuthServiceError) {
+      getLogger().warn({ err, msg: "Registration failed due to auth service error" });
+      const status = err.message === "Email already used" ? 409 : 400;
+      return NextResponse.json({ error: err.message }, { status });
+    }
 
-    return NextResponse.json({ error: message }, { status });
+    getLogger().error({ err, msg: "Unexpected error during registration" });
+    return NextResponse.json(
+      { error: "Registration failed" },
+      { status: 500 },
+    );
   }
 });
 
@@ -83,10 +91,14 @@ export const loginHandler = withLogging(async function (req: NextRequest) {
 
     return res;
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Login failed";
-    const status = message === "Invalid credentials" ? 401 : 500;
+    if (err instanceof AuthServiceError) {
+      getLogger().warn({ err, msg: "Login failed due to auth service error" });
+      const status = err.message === "Invalid credentials" ? 401 : 400;
+      return NextResponse.json({ error: err.message }, { status });
+    }
 
-    return NextResponse.json({ error: message }, { status });
+    getLogger().error({ err, msg: "Unexpected error during login" });
+    return NextResponse.json({ error: "Login failed" }, { status: 500 });
   }
 });
 

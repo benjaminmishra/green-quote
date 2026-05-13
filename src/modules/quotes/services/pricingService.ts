@@ -1,5 +1,8 @@
 import Decimal from "decimal.js";
 import type { RiskBand } from "@prisma/client";
+import { ServiceError } from "@/shared/errors";
+
+export class PricingServiceError extends ServiceError {}
 
 /**
  * Determines the risk band based on consumption and system size.
