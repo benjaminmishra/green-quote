@@ -33,6 +33,8 @@ vi.mock("@/modules/quotes/repositories/quotesRepository", () => ({
     findManyAll: vi.fn(),
     findManyByUser: vi.fn(),
   },
+  QuotesRepositoryError: class extends Error {},
+  QuotesInvalidCursorError: class extends Error {},
 }));
 
 vi.mock("@/modules/quotes/repositories/configRepository", () => ({
@@ -249,6 +251,20 @@ describe("Quote Handlers", () => {
       expect(res.status).toBe(200);
       expect(quotesRepository.findManyAll).toHaveBeenCalled();
       expect(quotesRepository.findManyByUser).not.toHaveBeenCalled();
+    });
+    it("returns 400 when an invalid cursor is provided", async () => {
+      vi.mocked(hasPermission).mockReturnValue(false);
+      const { QuotesInvalidCursorError } = await import(
+        "@/modules/quotes/repositories/quotesRepository"
+      );
+      vi.mocked(quotesRepository.findManyByUser).mockRejectedValue(
+        new QuotesInvalidCursorError("Invalid cursor"),
+      );
+      const req = new NextRequest("http://localhost/api/quotes?cursor=bad-id");
+      const res = await listQuotesHandler(req);
+      expect(res.status).toBe(400);
+      const json = await res.json();
+      expect(json.error).toBe("Invalid cursor");
     });
   });
 });

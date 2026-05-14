@@ -1,17 +1,12 @@
 import { prisma } from "@/shared/db";
+import { Prisma } from "@prisma/client";
 import type { QuoteCreateData } from "../models/repository";
 
 import { RepositoryError } from "@/shared/errors";
+import { safeUserSelect } from "../api/dto";
 
 export class QuotesRepositoryError extends RepositoryError {}
-
-const safeUserSelect = {
-  id: true,
-  email: true,
-  fullName: true,
-  role: true,
-  createdAt: true,
-} as const;
+export class QuotesInvalidCursorError extends QuotesRepositoryError {}
 
 export const quotesRepository = {
   async create(data: QuoteCreateData) {
@@ -45,6 +40,11 @@ export const quotesRepository = {
         skip,
       });
     } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        if (err.code === "P2025") {
+          throw new QuotesInvalidCursorError("Invalid cursor", { cause: err });
+        }
+      }
       throw new QuotesRepositoryError("Failed to find quotes by user", {
         cause: err,
       });
@@ -65,6 +65,11 @@ export const quotesRepository = {
         skip,
       });
     } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        if (err.code === "P2025") {
+          throw new QuotesInvalidCursorError("Invalid cursor", { cause: err });
+        }
+      }
       throw new QuotesRepositoryError("Failed to find quotes", {
         cause: err,
       });

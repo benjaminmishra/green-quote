@@ -3,7 +3,10 @@ import {
   calculatePricing,
   determineRiskBand,
 } from "../services/pricingService";
-import { quotesRepository } from "../repositories/quotesRepository";
+import {
+  QuotesInvalidCursorError,
+  quotesRepository,
+} from "../repositories/quotesRepository";
 import { configRepository } from "../repositories/configRepository";
 import {
   canReadQuote,
@@ -16,29 +19,7 @@ import { getLogger } from "@/shared/logger";
 import { withLogging } from "@/shared/withLogging";
 import { quoteCreateSchema } from "@/shared/schemas";
 import { ServiceError } from "@/shared/errors";
-
-function toQuoteResponse(quote: any) {
-  return {
-    id: quote.id,
-    userId: quote.userId,
-    address: quote.address,
-    monthlyConsumptionKwh: quote.monthlyConsumptionKwh,
-    systemSizeKw: quote.systemSizeKw.toString(),
-    downPayment: quote.downPayment.toString(),
-    systemPrice: quote.systemPrice.toString(),
-    riskBand: quote.riskBand,
-    offers: quote.offers,
-    createdAt: quote.createdAt,
-    user: quote.user
-      ? {
-          id: quote.user.id,
-          email: quote.user.email,
-          fullName: quote.user.fullName,
-          role: quote.user.role,
-        }
-      : undefined,
-  };
-}
+import { toQuoteResponse } from "./dto";
 
 export const postQuoteHandler = withLogging(async function (req: NextRequest) {
   try {
@@ -164,6 +145,9 @@ export const listQuotesHandler = withLogging(async function (req: NextRequest) {
       nextCursor,
     });
   } catch (error) {
+    if (error instanceof QuotesInvalidCursorError) {
+      return NextResponse.json({ error: "Invalid cursor" }, { status: 400 });
+    }
     getLogger().error({ err: error, msg: "Error listing quotes" });
     return NextResponse.json(
       { error: "Internal Server Error" },

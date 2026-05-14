@@ -28,7 +28,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/greenquote?schema=public
-    command: sh -c "npm install && npx prisma migrate deploy && npm run prisma:seed"
+    command: sh -c "npm ci && npx prisma migrate deploy && npm run prisma:seed"
     volumes:
       - .:/app
 
