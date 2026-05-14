@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  calculatePricing,
-  determineRiskBand,
-} from "../services/pricingService";
-import {
   QuotesInvalidCursorError,
   quotesRepository,
 } from "../repositories/quotesRepository";
-import { configRepository } from "../repositories/configRepository";
+import { quoteService } from "../services/quoteService";
 import {
   canReadQuote,
   forbidden,
@@ -49,34 +45,11 @@ export const postQuoteHandler = withLogging(async function (req: NextRequest) {
         { status: 400 },
       );
     }
-    const body = parseResult.data;
-
-    const riskBand = determineRiskBand(
-      body.monthlyConsumptionKwh,
-      body.systemSizeKw,
+    const { quote, priced, input } = await quoteService.createQuote(
+      auth.userId,
+      parseResult.data,
     );
 
-    const riskBandRow = await configRepository.findRiskBand(riskBand);
-    const loanTermRows = await configRepository.findActiveLoanTerms();
-    const termOptions = loanTermRows.map((t) => t.termYears);
-
-    const priced = calculatePricing(
-      body.systemSizeKw,
-      body.downPayment ?? 0,
-      riskBandRow.apr,
-      termOptions,
-      riskBand,
-    );
-    const quote = await quotesRepository.create({
-      userId: auth.userId,
-      address: body.address,
-      monthlyConsumptionKwh: body.monthlyConsumptionKwh,
-      systemSizeKw: body.systemSizeKw,
-      downPayment: body.downPayment ?? 0,
-      systemPrice: priced.systemPrice.toString(),
-      riskBand: priced.riskBand,
-      offers: priced.offers,
-    });
     getLogger().info({
       "user.id": auth.userId,
       quoteId: quote.id,
@@ -84,7 +57,7 @@ export const postQuoteHandler = withLogging(async function (req: NextRequest) {
     });
     return NextResponse.json({
       id: quote.id,
-      inputs: body,
+      inputs: input,
       derived: {
         systemPrice: priced.systemPrice.toFixed(2),
         riskBand: priced.riskBand,
