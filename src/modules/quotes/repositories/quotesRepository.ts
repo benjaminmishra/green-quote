@@ -5,10 +5,10 @@ import type { QuoteCreateData } from "../models/repository";
 import { RepositoryError } from "@/shared/errors";
 import { safeUserSelect } from "../models/userProjection";
 
-export class QuotesRepositoryError extends RepositoryError {}
-export class QuotesInvalidCursorError extends QuotesRepositoryError {}
+export class QuotesRepositoryError extends RepositoryError { }
+export class QuotesInvalidCursorError extends QuotesRepositoryError { }
 
-type PageOptions = { limit?: number; cursor?: string };
+type PageOptions = { limit: number; cursor?: string };
 
 function pageArgs({ limit, cursor }: PageOptions) {
   return {
@@ -42,7 +42,7 @@ export const quotesRepository = {
     }
   },
 
-  async findManyByUser(userId: string, options: PageOptions = {}) {
+  async findManyByUser(userId: string, options: PageOptions) {
     try {
       return await prisma.quotes.findMany({
         where: { userId },
@@ -55,7 +55,7 @@ export const quotesRepository = {
     }
   },
 
-  async findManyAll(options: PageOptions = {}) {
+  async findManyAll(options: PageOptions) {
     try {
       return await prisma.quotes.findMany({
         include: { user: { select: safeUserSelect } },

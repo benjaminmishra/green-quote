@@ -30,7 +30,7 @@ function makeQuoteCreateData(
 
 describe("quotesRepository", () => {
   it("findManyByUser calls prisma correctly", async () => {
-    const quotes = await quotesRepository.findManyByUser("u1");
+    const quotes = await quotesRepository.findManyByUser("u1", { limit: 20 });
     expect(prisma.quotes.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { userId: "u1" },

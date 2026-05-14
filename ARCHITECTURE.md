@@ -1,27 +1,158 @@
-# GreenQuote Architecture
+# Architecture Overview
 
-This document describes the architectural decisions, trade-offs, and structure of the GreenQuote application.
+## Introduction
 
-## Architectural Decisions
+This project is a modular-monolith backend application for generating and managing solar financing quotes.
 
-- **Vertical Slice**: Domain modules are organized in `src/modules/auth` and `src/modules/quotes`.
-- **Next.js App Router**: The Next.js `src/app` directory only contains routing and route handlers, keeping domain logic isolated.
-- **Schemas & Validation**: Zod is used for both client-side and server-side validation.
-- **Pricing Model Calculations**: `decimal.js` is used in the pricing service for high precision to prevent floating-point errors.
-- **Authentication**: Custom email/password + JWT stored in a secure HttpOnly cookie.
+The system was intentionally designed to optimize for:
 
-## Trade-offs
+- maintainability,
+- operational simplicity,
+- deterministic business behavior,
+- clear module boundaries,
+- local reproducibility,
+- future extensibility.
 
-- **Monolith over Microservices**: Built as a modular monolith within the Next.js App Router for simplicity and speed. Separating the frontend and backend would add unnecessary complexity and overhead at this stage.
+The current implementation focuses on delivering a production-oriented foundation without prematurely introducing distributed system complexity.
 
-- **Client-side Fetching**: Used standard client-side `fetch` in React components instead of Next.js Server Actions. While Server Actions reduce boilerplate, standard API routes ensure a clean separation between the UI and the API layer, making the API independently testable and consumable.
+# Architectural Principles
 
-- **Custom Auth vs External IdP**: Implemented custom email/password authentication (with bcrypt + JWT) to minimize external dependencies. Integrating an external IdP like Keycloak was deferred to keep the local setup fast, though the JWT validation layer is built to easily adapt to standard IdP claims.
+The system is designed around the following principles:
 
-- **Vertical Slicing**: Code is organized by feature domains (`auth`, `quotes`) rather than technical concern (controllers, services, models). This makes the codebase easier to navigate but can lead to slight duplication of shared utilities.
+- Prefer modularity over premature distribution.
+- Keep business logic isolated from transport and persistence layers.
+- Optimize for simplicity and maintainability first.
+- Design modules that can later evolve into services if needed.
+- Keep APIs deterministic and testable.
+- Centralize authorization decisions.
+- Treat pricing logic as domain logic rather than persistence logic.
+- Make trade-offs explicit and documented.
 
-- **Pagination Strategy**: The application currently uses a simple cursor-based pagination with Prisma (`take: limit`, `skip: 1`, `cursor: { id }`). While this is simple and works for the current scale, it is a known architectural tradeoff. In a high-scale production system, an continuation token should be used instead to ensure cursor values cannot be easily guessed or manipulated, and to potentially allow encoding query state directly into the token.
+# High-Level Architecture
 
-- **JWT Revocation**: Currently, JWT revocation does not exist. Once issued, the token remains valid for its full 24-hour lifespan (`.setExpirationTime("1d")`). If a token leaks, it cannot be revoked. Production systems usually mitigate this by using short-lived access tokens, refresh tokens, token versioning, a centralized session store. This was an explicit trade-off decision made to avoid unnecessary complexity at this stage of the project.
+The application follows a modular monolith architecture.
 
-- **Rate Limiting**: There is currently no rate limiting or API throttling implemented. This was an explicit trade-off decision made to avoid unnecessary complexity at this stage of the project.
+Each domain is isolated into vertical slices:
+
+- `auth`
+- `quotes`
+- `shared`
+
+Each module owns:
+- API handlers,
+- services,
+- repositories,
+- DTOs,
+- domain logic.
+
+The system intentionally avoids introducing:
+- distributed messaging,
+- service meshes,
+- orchestration layers,
+- separate deployable services,
+
+because the current domain complexity and operational requirements do not justify that level of infrastructure complexity.
+
+# Why a Modular Monolith
+
+A modular monolith was intentionally chosen over microservices.
+
+Reasons:
+
+- simpler deployments,
+- lower operational overhead,
+- easier local development,
+- easier transactional consistency,
+- reduced cognitive complexity,
+- faster iteration speed,
+- smaller infrastructure footprint.
+
+For the current scope, introducing distributed services would create more operational complexity than business value.
+
+The module boundaries are intentionally designed so they could later evolve into independently deployable services if scale or organizational structure required it.
+
+
+# Security and Trust Boundaries
+
+Authentication is validated at the middleware layer using JWT verification.
+The middleware injects a normalized authentication context into downstream handlers.
+Protected routes are intentionally isolated behind middleware matchers.
+
+# Authorization Model
+
+The system uses role-based access control (RBAC).
+
+Roles:
+- USER
+- ADMIN
+
+Permissions are derived from roles.
+
+Authorization decisions are centralized through shared RBAC utilities rather than scattered inline checks.
+
+
+# Pricing Architecture
+
+Pricing logic is intentionally isolated from persistence and transport layers.
+
+The pricing engine:
+- is deterministic,
+- contains no database access,
+- uses `decimal.js` for monetary precision,
+- is fully unit testable.
+
+# Persistence Strategy
+
+The application uses PostgreSQL with Prisma ORM.
+
+Reasons:
+- transactional consistency,
+- strong relational modeling,
+- mature tooling,
+- migration support,
+- strong TypeScript integration.
+
+# Pagination Strategy
+
+Cursor pagination was chosen over offset pagination to avoid large-offset query degradation.
+
+Current implementation uses entity identifiers as cursors andoptimizes for implementation simplicity.
+
+# Observability
+
+The system includes structured logging around:
+- authentication,
+- authorization,
+- quote creation,
+- error handling.
+
+It uses pino for logging, and it logs to stdout, which is what docker expects.
+In prod this needs to be wired up to a log aggregation system.
+
+# Operational Simplicity
+
+The app architecture intentionally minimizes operational burden:
+
+- single deployable unit, is built on a modular monolith,
+- single database, uses PostgreSQL,
+- deterministic local setup, can run in a docker container.
+- minimal infrastructure dependencies
+
+# Non-Goals
+
+This project intentionally does not include:
+
+- multi-region deployments,
+- distributed caching,
+- advanced fraud detection,
+- asynchronous workflow orchestration,
+- multi-tenant isolation,
+- advanced risk scoring,
+- full OIDC identity integration.
+
+The primary goal was to optimize for:
+- clarity,
+- correctness,
+- maintainability,
+- architectural extensibility,
+- operational simplicity.
