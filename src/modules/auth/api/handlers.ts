@@ -7,21 +7,15 @@ import {
 import { withLogging } from "@/shared/withLogging";
 import { AUTH_COOKIE_OPTIONS } from "@/shared/cookieOptions";
 import { getLogger } from "@/shared/logger";
+import { parseJsonBody } from "@/shared/parseJsonBody";
 
 import { authRegisterSchema, authLoginSchema } from "@/shared/schemas";
 
 export const registerHandler = withLogging(async function (req: NextRequest) {
-  let body;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json(
-      { error: "Invalid JSON payload" },
-      { status: 400 },
-    );
-  }
+  const parsed = await parseJsonBody(req);
+  if (!parsed.ok) return parsed.response;
 
-  const parseResult = authRegisterSchema.safeParse(body);
+  const parseResult = authRegisterSchema.safeParse(parsed.body);
   if (!parseResult.success) {
     return NextResponse.json(
       { error: "Please enter a valid name, email, and password." },
@@ -54,16 +48,10 @@ export const registerHandler = withLogging(async function (req: NextRequest) {
 });
 
 export const loginHandler = withLogging(async function (req: NextRequest) {
-  let body;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json(
-      { error: "Invalid JSON payload" },
-      { status: 400 },
-    );
-  }
-  const parseResult = authLoginSchema.safeParse(body);
+  const parsed = await parseJsonBody(req);
+  if (!parsed.ok) return parsed.response;
+
+  const parseResult = authLoginSchema.safeParse(parsed.body);
   if (!parseResult.success) {
     return NextResponse.json(
       { error: "Please enter a valid email and password." },

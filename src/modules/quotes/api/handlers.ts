@@ -15,6 +15,7 @@ import { getLogger } from "@/shared/logger";
 import { withLogging } from "@/shared/withLogging";
 import { quoteCreateSchema } from "@/shared/schemas";
 import { ServiceError } from "@/shared/errors";
+import { parseJsonBody } from "@/shared/parseJsonBody";
 import { toQuoteResponse } from "./dto";
 
 export const postQuoteHandler = withLogging(async function (req: NextRequest) {
@@ -29,16 +30,10 @@ export const postQuoteHandler = withLogging(async function (req: NextRequest) {
       msg: "Attempting to create quote",
     });
 
-    let rawBody;
-    try {
-      rawBody = await req.json();
-    } catch {
-      return NextResponse.json(
-        { error: "Invalid JSON payload" },
-        { status: 400 },
-      );
-    }
-    const parseResult = quoteCreateSchema.safeParse(rawBody);
+    const parsed = await parseJsonBody(req);
+    if (!parsed.ok) return parsed.response;
+
+    const parseResult = quoteCreateSchema.safeParse(parsed.body);
     if (!parseResult.success) {
       return NextResponse.json(
         { error: "Validation failed", details: parseResult.error.flatten() },
