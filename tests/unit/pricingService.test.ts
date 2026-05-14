@@ -14,6 +14,15 @@ describe("determineRiskBand", () => {
   it("returns C for low consumption", () => {
     expect(determineRiskBand(100, 5)).toBe("C");
   });
+  it("returns B once system size exceeds 6kW even with high consumption", () => {
+    expect(determineRiskBand(400, 6.01)).toBe("B");
+  });
+  it("returns B exactly at the 250kWh consumption threshold", () => {
+    expect(determineRiskBand(250, 7)).toBe("B");
+  });
+  it("returns C just below the 250kWh consumption threshold", () => {
+    expect(determineRiskBand(249, 5)).toBe("C");
+  });
 });
 
 describe("calculatePricing", () => {
