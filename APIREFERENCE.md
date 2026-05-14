@@ -7,6 +7,17 @@ The GreenQuote application features an auto-rendered OpenAPI documentation page 
 When running the application locally, you can access the interactive Swagger UI documentation at:
 [`/api-docs`](http://localhost:3000/api-docs)
 
+## HTTP Request Examples
+
+A `requests/` folder is included at the root of the repository. It contains `.http` files (one for each logical API route grouping) with ready-to-use request examples. These files can be executed directly from IDEs that support them (like VS Code with the REST Client extension or JetBrains IDEs).
+
+- `requests/health.http`
+- `requests/auth-register.http`
+- `requests/auth-login.http`
+- `requests/quotes-create.http`
+- `requests/quotes-list.http`
+- `requests/quotes-get.http`
+
 ## Available Endpoints
 
 ### Health

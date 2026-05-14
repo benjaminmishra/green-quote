@@ -1,0 +1,7 @@
+@baseUrl = http://localhost:3000
+@token = your_jwt_token_here
+@quoteId = insert_quote_id_here
+
+### Get a specific quote by ID
+GET {{baseUrl}}/api/quotes/{{quoteId}}
+Authorization: Bearer {{token}}

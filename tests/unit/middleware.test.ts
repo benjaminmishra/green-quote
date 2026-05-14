@@ -64,12 +64,14 @@ describe("middleware", () => {
   it("protects /admin routes", async () => {
     const req = new NextRequest("http://localhost/admin/quotes");
     const res = await middleware(req);
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toBe("http://localhost/login");
   });
 
   it("protects /quotes routes", async () => {
     const req = new NextRequest("http://localhost/quotes");
     const res = await middleware(req);
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toBe("http://localhost/login");
   });
 });

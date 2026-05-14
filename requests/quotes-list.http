@@ -1,0 +1,11 @@
+@baseUrl = http://localhost:3000
+@token = your_jwt_token_here
+@quoteId = insert_quote_id_here
+
+### List quotes (first page)
+GET {{baseUrl}}/api/quotes?limit=10
+Authorization: Bearer {{token}}
+
+### List quotes (next page using cursor)
+GET {{baseUrl}}/api/quotes?limit=10&cursor={{quoteId}}
+Authorization: Bearer {{token}}

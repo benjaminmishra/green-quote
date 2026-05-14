@@ -10,19 +10,28 @@ export async function middleware(req: NextRequest) {
   )
     return NextResponse.next();
 
-  let token = req.cookies.get("token")?.value;
-  if (!token) {
-    const authHeader = req.headers.get("authorization");
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      token = authHeader.substring(7);
+  let token: string | undefined;
+
+  const authHeader = req.headers.get("authorization");
+  if (authHeader) {
+    if (authHeader.startsWith("Bearer ")) {
+      token = authHeader.substring(7).trim();
     }
+  } else {
+    token = req.cookies.get("token")?.value;
   }
 
-  if (!token)
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401, headers: { "WWW-Authenticate": 'Bearer realm="api"' } },
-    );
+  const respondUnauthorized = () => {
+    if (path.startsWith("/api")) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401, headers: { "WWW-Authenticate": 'Bearer realm="api"' } },
+      );
+    }
+    return NextResponse.redirect(new URL("/login", req.url));
+  };
+
+  if (!token) return respondUnauthorized();
 
   try {
     const auth = await verifyToken(token);
@@ -31,10 +40,7 @@ export async function middleware(req: NextRequest) {
     requestHeaders.set("x-auth-context", JSON.stringify(auth));
     return NextResponse.next({ request: { headers: requestHeaders } });
   } catch {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401, headers: { "WWW-Authenticate": 'Bearer realm="api"' } },
-    );
+    return respondUnauthorized();
   }
 }
 

@@ -1,0 +1,25 @@
+@baseUrl = http://localhost:3000
+@token =
+
+### Create a new quote
+POST {{baseUrl}}/api/quotes
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "address": "123 Solar Way, Austin, TX",
+  "monthlyConsumptionKwh": 850,
+  "systemSizeKw": 6.5,
+  "downPayment": 1500
+}
+
+### Create a quote without down payment
+POST {{baseUrl}}/api/quotes
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "address": "456 Green Ave, Denver, CO",
+  "monthlyConsumptionKwh": 400,
+  "systemSizeKw": 4.0
+}
