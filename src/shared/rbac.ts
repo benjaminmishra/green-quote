@@ -61,7 +61,10 @@ export function getAuthContextFromRequest(
 }
 
 export function unauthorized() {
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  return NextResponse.json(
+    { error: "Unauthorized" },
+    { status: 401, headers: { "WWW-Authenticate": 'Bearer realm="api"' } }
+  );
 }
 
 export function forbidden() {

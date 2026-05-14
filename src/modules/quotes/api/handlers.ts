@@ -18,14 +18,7 @@ import { getLogger } from "@/shared/logger";
 import { withLogging } from "@/shared/withLogging";
 import { ServiceError } from "@/shared/errors";
 
-const schema = z.object({
-  fullName: z.string().min(1),
-  email: z.string().email(),
-  address: z.string().min(3),
-  monthlyConsumptionKwh: z.number().int().positive(),
-  systemSizeKw: z.number().positive(),
-  downPayment: z.number().nonnegative().optional().default(0),
-});
+import { quoteCreateSchema } from "@/shared/schemas";
 
 export const postQuoteHandler = withLogging(async function (req: NextRequest) {
   try {
@@ -48,7 +41,7 @@ export const postQuoteHandler = withLogging(async function (req: NextRequest) {
         { status: 400 },
       );
     }
-    const parseResult = schema.safeParse(rawBody);
+    const parseResult = quoteCreateSchema.safeParse(rawBody);
     if (!parseResult.success) {
       return NextResponse.json(
         { error: "Validation failed", details: parseResult.error.flatten() },

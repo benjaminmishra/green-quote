@@ -5,13 +5,7 @@ import { withLogging } from "@/shared/withLogging";
 import { AUTH_COOKIE_OPTIONS } from "@/shared/cookieOptions";
 import { getLogger } from "@/shared/logger";
 
-const schema = z.object({
-  fullName: z.string().trim().min(1),
-  email: z.string().trim().toLowerCase().email(),
-  password: z.string().min(6),
-});
-
-const loginSchema = schema.pick({ email: true, password: true });
+import { authRegisterSchema, authLoginSchema } from "@/shared/schemas";
 
 export const registerHandler = withLogging(async function (req: NextRequest) {
   try {
@@ -24,7 +18,7 @@ export const registerHandler = withLogging(async function (req: NextRequest) {
         { status: 400 },
       );
     }
-    const data = schema.parse(body);
+    const data = authRegisterSchema.parse(body);
     const user = await authService.register(
       data.fullName,
       data.email,
@@ -68,7 +62,7 @@ export const loginHandler = withLogging(async function (req: NextRequest) {
       { status: 400 },
     );
   }
-  const parseResult = loginSchema.safeParse(body);
+  const parseResult = authLoginSchema.safeParse(body);
   if (!parseResult.success) {
     return NextResponse.json(
       { error: "Please enter a valid email and password." },

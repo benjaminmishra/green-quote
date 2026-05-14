@@ -10,9 +10,19 @@ export async function middleware(req: NextRequest) {
   )
     return NextResponse.next();
 
-  const token = req.cookies.get("token")?.value;
+  let token = req.cookies.get("token")?.value;
+  if (!token) {
+    const authHeader = req.headers.get("authorization");
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.substring(7);
+    }
+  }
+
   if (!token)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401, headers: { "WWW-Authenticate": 'Bearer realm="api"' } },
+    );
 
   try {
     const auth = await verifyToken(token);
@@ -20,7 +30,10 @@ export async function middleware(req: NextRequest) {
     requestHeaders.set("x-auth-context", JSON.stringify(auth));
     return NextResponse.next({ request: { headers: requestHeaders } });
   } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401, headers: { "WWW-Authenticate": 'Bearer realm="api"' } },
+    );
   }
 }
 

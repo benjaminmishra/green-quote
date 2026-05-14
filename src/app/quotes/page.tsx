@@ -1,6 +1,7 @@
 import { LogoutButton } from "@/modules/auth/ui/LogoutButton";
 import { QuotesDashboard } from "@/modules/quotes/ui/QuotesDashboard";
 import { getAuthOrRedirect } from "@/lib/getAuthOrRedirect";
+import { redirect } from "next/navigation";
 
 export default async function Page() {
   const auth = await getAuthOrRedirect();
