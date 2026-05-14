@@ -8,6 +8,26 @@ import { safeUserSelect } from "../models/userProjection";
 export class QuotesRepositoryError extends RepositoryError {}
 export class QuotesInvalidCursorError extends QuotesRepositoryError {}
 
+type PageOptions = { limit?: number; cursor?: string };
+
+function pageArgs({ limit, cursor }: PageOptions) {
+  return {
+    take: limit,
+    cursor: cursor ? { id: cursor } : undefined,
+    skip: cursor ? 1 : undefined,
+  };
+}
+
+function rethrowPaginationError(err: unknown, msg: string): never {
+  if (
+    err instanceof Prisma.PrismaClientKnownRequestError &&
+    err.code === "P2025"
+  ) {
+    throw new QuotesInvalidCursorError("Invalid cursor", { cause: err });
+  }
+  throw new QuotesRepositoryError(msg, { cause: err });
+}
+
 export const quotesRepository = {
   async create(data: QuoteCreateData) {
     try {
@@ -22,57 +42,28 @@ export const quotesRepository = {
     }
   },
 
-  async findManyByUser(
-    userId: string,
-    options?: { limit?: number; cursor?: string },
-  ) {
+  async findManyByUser(userId: string, options: PageOptions = {}) {
     try {
-      const take = options?.limit;
-      const cursor = options?.cursor ? { id: options.cursor } : undefined;
-      const skip = cursor ? 1 : undefined;
-
       return await prisma.quotes.findMany({
         where: { userId },
         include: { user: { select: safeUserSelect } },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take,
-        cursor,
-        skip,
+        ...pageArgs(options),
       });
     } catch (err) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError) {
-        if (err.code === "P2025") {
-          throw new QuotesInvalidCursorError("Invalid cursor", { cause: err });
-        }
-      }
-      throw new QuotesRepositoryError("Failed to find quotes by user", {
-        cause: err,
-      });
+      rethrowPaginationError(err, "Failed to find quotes by user");
     }
   },
 
-  async findManyAll(options?: { limit?: number; cursor?: string }) {
+  async findManyAll(options: PageOptions = {}) {
     try {
-      const take = options?.limit;
-      const cursor = options?.cursor ? { id: options.cursor } : undefined;
-      const skip = cursor ? 1 : undefined;
-
       return await prisma.quotes.findMany({
         include: { user: { select: safeUserSelect } },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take,
-        cursor,
-        skip,
+        ...pageArgs(options),
       });
     } catch (err) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError) {
-        if (err.code === "P2025") {
-          throw new QuotesInvalidCursorError("Invalid cursor", { cause: err });
-        }
-      }
-      throw new QuotesRepositoryError("Failed to find quotes", {
-        cause: err,
-      });
+      rethrowPaginationError(err, "Failed to find quotes");
     }
   },
 
