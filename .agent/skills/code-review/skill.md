@@ -1,129 +1,147 @@
-# Codebase Review
+---
+name: code-review
+description: Perform a thorough codebase review of the green-quote project across architecture, correctness, types, security, tests, and Next.js best practices, and produce a structured markdown report.
+---
 
-Perform a thorough codebase review of the green-quote project. Analyze the codebase across the dimensions listed below and produce a structured review report as a markdown artifact.
+# Codebase Review — green-quote
+
+Perform a thorough codebase review of the green-quote project. Analyze the codebase across the dimensions listed below and produce a structured review report.
 
 ## Review Scope
 
-Review the **entire** project. Focus on `src/`, `tests/`, and `prisma/` directories. Exclude `node_modules/`, `.next/`, and generated files.
+Review **only first-party source**: `src/`, `tests/`, `prisma/`, and top-level config (`next.config.mjs`, `tsconfig.json`, `Dockerfile`, `docker-compose.yml`, `package.json`). **Exclude** `node_modules/`, `.next/`, `*.tsbuildinfo`, `package-lock.json`, and any generated Prisma client.
 
-If the user provides a `$ARGUMENTS` value (e.g. a specific module name like "quotes" or "auth"), scope the review to that area only.
+If the invocation includes `$ARGUMENTS` (e.g. `quotes`, `auth`, `pricing`), scope the review to that module/area only and skip dimensions that do not apply.
+
+## How to Read the Repo
+
+Before producing findings, read at minimum:
+
+- `ARCHITECTURE.md` and `README.md` (to ground claims against the documented intent — flag drift, do not duplicate the architecture description).
+- `prisma/schema.prisma` and every file under `prisma/migrations/` (reference data lives in migration SQL, e.g. `RiskBands`, `LoanTerms` — do **not** flag missing seeds for these).
+- `src/middleware.ts`, `src/instrumentation.ts`, `src/app/**/route.ts` (the request/response surface).
+- The module(s) in scope: `src/modules/<name>/{api,services,repositories,models,ui}/*`.
+- Tests that cover the module in scope, especially `tests/integration/*-flow.test.ts` — these encode the API contract.
+
+Prefer reading whole files for files <300 lines; grep first for files >300 lines.
 
 ---
 
 ## Review Dimensions
 
+For each dimension assign 🟢 Healthy / 🟡 Needs Attention / 🔴 Needs Significant Work. Always cite `path:line` so the user can jump to the source.
+
 ### 1. Folder Structure & Architecture
 
-- Does the folder layout follow a clear, consistent pattern (e.g. feature-based modules)?
-- Are module boundaries well-defined? Is there leakage between modules?
-- Is the separation between `app/` (Next.js routes), `modules/` (domain logic), `shared/` (cross-cutting), and `lib/` (framework glue) respected?
-- Are files placed in the right layer? (e.g. API routes don't contain business logic, repositories don't contain UI code)
-- Flag any orphaned, misplaced, or confusingly named files/directories.
+- Does the layout follow the documented vertical-slice pattern (`src/modules/<feature>/{api,services,repositories,models,ui}`)?
+- Are App Router files (`src/app/**`) thin shims that delegate to module handlers?
+- Are there **layer inversions**? Specifically check that `repositories/` does NOT import from `api/` or `ui/`, and that `services/` does NOT import from `api/`. (Historical hot spot: `safeUserSelect` colocated in `api/dto.ts` but consumed by repositories.)
+- Are `src/lib/` and `src/shared/` boundaries respected and non-overlapping?
 
-### 2. Code Readability & Clarity
+### 2. API ↔ UI Contract Coherence (high signal)
 
-- Are functions and variables named clearly and consistently?
-- Is the code self-documenting? Are comments used where genuinely needed (not to explain obvious code)?
-- Are files a reasonable length? Flag any that exceed ~200 lines.
-- Is there consistent formatting and code style?
-- Are complex expressions broken down into readable steps?
-- Is there appropriate use of TypeScript types vs `any`?
+This is the dimension most likely to harbor latent runtime bugs. For every API handler in scope:
 
-### 3. Separation of Concerns
+1. Note the exact JSON shape it returns (`NextResponse.json({...})`).
+2. Find every UI fetch of that endpoint and verify the consumer destructures the same shape.
+3. Check pagination, error envelopes, and Decimal-as-string conventions for consistency between server and client.
 
-- Does each module follow the internal layering pattern: `api/` → `services/` → `repositories/` → `models/`?
-- Are UI components (`ui/`) free of direct data-fetching or business logic?
-- Are services pure or at least clearly separated from infrastructure?
-- Is the Prisma client properly abstracted behind repositories?
+Cite both ends of any mismatch.
 
-### 4. Error Handling & Robustness
+### 3. Code Readability & Clarity
 
-- Are errors handled consistently across API routes and services?
-- Is there proper input validation (e.g. using Zod schemas)?
-- Are edge cases considered (empty results, invalid inputs, auth failures)?
-- Is logging used effectively (structured logging with pino)?
+- Naming, function size, file size (flag >300 lines, suggest decomposition).
+- JSDoc correctness — `/** */` vs `/* */` (the latter does not render).
+- Inline-style sprawl in `ui/`: acceptable in this codebase but suggest extraction when a file exceeds ~250 lines or repeats styles.
+- Dead code, unused params (`_req` convention).
 
-### 5. Type Safety
+### 4. Separation of Concerns
 
-- Are TypeScript types used effectively throughout?
-- Are there model types for domain, UI, and API layers (avoiding leaking Prisma types to the frontend)?
-- Is `any` used anywhere it shouldn't be?
-- Are Zod schemas aligned with TypeScript types?
+- API handlers should orchestrate **auth → DTO → service → response**, not call repositories or compute business logic directly. Hot spot: `postQuoteHandler` historically computes risk band + pricing + persistence directly — recommend a `quoteService.createQuote()`.
+- UI components should not embed business rules; only display + minimal client-side validation.
+- Repositories own all Prisma calls; services and handlers must not touch `prisma.*` directly.
 
-### 6. Testing
+### 5. Error Handling & Robustness
 
-- Is test coverage adequate for critical paths (services, pricing logic, API routes)?
-- Are unit and integration tests properly separated?
-- Do integration tests use testcontainers correctly?
-- Are test names descriptive and organized?
-- Are there missing test cases for important edge cases?
+- Are domain errors typed (subclasses of `RepositoryError` / `ServiceError`) rather than string-matched on `.message`? Flag any `err.message === "..."` comparison.
+- Is Zod parsing consistent — prefer `safeParse` with explicit error mapping over `.parse` + catch.
+- Are all JSON body reads guarded with try/catch returning 400 "Invalid JSON payload"?
+- Does `withLogging` correctly wrap every handler? Are unhandled errors converted to a generic 500 without leaking internals?
+- Does `middleware.ts` correctly fall back from `Authorization` header to cookie in **all** edge cases (empty header, non-Bearer scheme)?
 
-### 7. Security
+### 6. Type Safety
 
-- Is authentication/authorization properly enforced (middleware, RBAC)?
-- Are secrets handled correctly (env vars, not hardcoded)?
-- Is input sanitized before database queries?
-- Are API routes properly protected?
+- `any`/`unknown` usage — only acceptable at JSON parsing boundaries.
+- Prisma `Decimal` and `Json` fields: are they projected through a DTO before reaching the UI? Flag direct leakage of `Prisma.Decimal` or untyped `Json` to the response.
+- Test fixtures using `as any` to bypass repository contracts — flag and suggest typed factories.
+- Zod schemas in `src/shared/schemas.ts` should be the single source of truth for request DTOs.
 
-### 8. DRY & Code Reuse
+### 7. Testing
 
-- Is there duplicated logic that should be extracted?
-- Are shared utilities in `src/shared/` actually reused?
-- Are there similar patterns across modules that could be unified?
+- Is pricing logic covered with boundary tests? (`determineRiskBand` thresholds 250/400, size=6 boundary; `calculatePricing` with `apr=0`, `down >= systemPrice`, large numbers.)
+- Are integration tests using testcontainers correctly and reseeding state between tests?
+- Is there at least one test asserting the **shape** the UI consumes (especially paginated `{ items, nextCursor }` envelopes)?
+- Test names descriptive; no `it("works")`.
 
-### 9. Next.js App Router & Full Stack Best Practices
+### 8. Security (lightweight — defer deep pass to `security-review` skill)
 
-- **Server-First Approach**: Are React Server Components (RSC) the default? Are Client Components (`"use client"`) pushed as deep into the component tree as possible?
-- **Thin Route Boundaries**: Are `page.tsx` and `layout.tsx` files lean, delegating business logic to dedicated services or helper functions?
-- **Colocation**: Are files kept close to where they are used (The Rule of Proximity)?
-- **Data Fetching & State**: Is data fetched on the server close to where it's used? Are Server Actions utilized for form submissions and mutations instead of traditional API routes?
-- **Security**: Are server-only secrets properly protected (no `NEXT_PUBLIC_` prefix unless needed)? Are Server Actions validating input with schemas (like Zod) and authenticating every request?
+- Flag obvious issues only (hardcoded secrets, missing auth on protected routes, `dangerouslySetInnerHTML`, missing `httpOnly`/`secure`/`sameSite` on auth cookies).
+- For any deeper security concern, write "**See security-review.**" and stop.
+
+### 9. DRY & Code Reuse
+
+- Cursor-pagination duplication between `findManyByUser` and `findManyAll` (and equivalents).
+- Repeated JSON-body parsing guards across handlers — propose a shared helper.
+- Inline-style duplication that could move to `*Styles.ts`.
+
+### 10. Next.js App Router & Full-Stack Best Practices
+
+- Are pages Server Components by default, with `"use client"` pushed as deep as possible?
+- Could a page pre-fetch its first data slice on the server and hand `initialItems` to the client component (cheap perf win)?
+- Are `redirect()` calls placed correctly (no flicker)?
+- Are server-only secrets free of `NEXT_PUBLIC_` prefix?
+- Is `instrumentation.ts` env validation strict (length/entropy, not just non-empty)?
 
 ---
 
 ## Output Format
 
-Produce the review as a markdown artifact named `codebase_review.md` with the following structure:
+Produce a markdown report — inline in chat by default, or to a file if the user explicitly asks. Use this structure:
 
-```
+```markdown
 # Codebase Review — green-quote
 
-**Date:** <current date>
-**Scope:** <full codebase or specific module>
+**Date:** <ISO date>
+**Scope:** <full | module name>
 
 ## Summary
 
-<2-3 sentence overall assessment with a health rating: 🟢 Healthy / 🟡 Needs Attention / 🔴 Needs Significant Work>
+<2–3 sentences with health rating: 🟢 / 🟡 / 🔴. Name the single highest-impact issue.>
 
 ## Detailed Findings
 
-### 1. Folder Structure & Architecture
-**Rating:** 🟢/🟡/🔴
+### 1. Folder Structure & Architecture — <rating>
+<findings with path:line citations>
 
-<findings with specific file references>
+### 2. API ↔ UI Contract Coherence — <rating>
+<findings>
 
-### 2. Code Readability & Clarity
-**Rating:** 🟢/🟡/🔴
-
-<findings with specific file references and line numbers>
-
-... (repeat for each dimension)
+... (one section per applicable dimension)
 
 ## Top Recommendations
-
-<Numbered list of the 5 most impactful improvements, ordered by priority>
+<numbered, priority-ordered, with concrete code snippets where they sharpen the suggestion>
 
 ## Quick Wins
-
-<Bullet list of small, easy-to-fix issues>
+<bulleted, small-and-easy items>
 ```
 
 ---
 
 ## Guidelines
 
-- Be specific: reference actual files and line numbers.
-- Be constructive: pair every criticism with a concrete suggestion.
-- Acknowledge strengths: call out well-designed parts of the codebase.
-- Use code snippets in your findings when they help illustrate a point.
-- Keep recommendations actionable and prioritized by impact.
+- **Be specific.** Every claim needs a `path:line` citation. Vague observations ("this could be cleaner") are not findings.
+- **Acknowledge strengths.** Call out what the codebase does well — RBAC, pino redaction, Decimal usage, vertical slicing.
+- **Distinguish bugs from style.** Lead with bugs (anything that breaks at runtime or violates the contract) before stylistic items.
+- **Pair every criticism with a fix.** Show a one-line snippet or pseudocode for the proposed change.
+- **Respect documented trade-offs.** `ARCHITECTURE.md` already calls out: monolith, client-side fetching, custom auth, simple cursor pagination, no JWT revocation, no rate limiting. Do not re-litigate these — only flag if the implementation deviates from the documented trade-off.
+- **Defer deep security.** For anything beyond an obvious lapse, write "See security-review." and stop.
