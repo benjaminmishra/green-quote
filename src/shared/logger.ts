@@ -28,12 +28,12 @@ export const logger = pino({
   transport: isProduction
     ? undefined
     : {
-        target: "pino-pretty",
-        options: {
-          colorize: true,
-          ignore: "pid,hostname",
-        },
+      target: "pino-pretty",
+      options: {
+        colorize: true,
+        ignore: "pid,hostname",
       },
+    },
 });
 
 export const getLogger = () => {

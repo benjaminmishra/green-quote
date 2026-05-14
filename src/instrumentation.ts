@@ -11,7 +11,7 @@ export async function register() {
 
     if (!result.success) {
       console.error(
-        "❌ Invalid environment variables during startup:",
+        "Invalid environment variables during startup:",
         JSON.stringify(result.error.format(), null, 2),
       );
       process.exit(1);

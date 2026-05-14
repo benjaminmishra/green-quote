@@ -7,6 +7,12 @@ type RouteHandler = (
   ...args: unknown[]
 ) => Promise<NextResponse>;
 
+/**
+ * Adds request/response logging to a route handler.
+ * Uses async-local-storage to propagate a trace ID.
+ * @param handler The route handler to wrap with logging.
+ * @returns The wrapped route handler.
+ */
 export function withLogging(handler: RouteHandler) {
   return async (req: NextRequest, ...args: unknown[]) => {
     const traceId = req.headers.get("x-trace-id") || randomUUID();

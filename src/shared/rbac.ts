@@ -33,10 +33,21 @@ const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
   ADMIN: ["quotes:read:any", "admin:quotes:read"],
 };
 
+/**
+ * Gets the permissions for a specific role.
+ * @param role The role to get permissions for.
+ * @returns An array of permissions for the specified role.
+ */
 export function getPermissionsForRole(role: AppRole): Permission[] {
   return ROLE_PERMISSIONS[role] ?? [];
 }
 
+/**
+ * Checks if the authenticated user has a specific permission.
+ * @param ctx The authentication context.
+ * @param permission The permission to check.
+ * @returns True if the user has the permission, false otherwise.
+ */
 export function hasPermission(
   ctx: AuthContext,
   permission: Permission,
@@ -44,10 +55,21 @@ export function hasPermission(
   return ctx.permissions.includes(permission);
 }
 
+/**
+ * Checks if the authenticated user can read a quote.
+ * @param ctx The authentication context.
+ * @param ownerId The ID of the quote owner.
+ * @returns True if the user can read the quote, false otherwise.
+ */
 export function canReadQuote(ctx: AuthContext, ownerId: string): boolean {
   return hasPermission(ctx, "quotes:read:any") || ctx.userId === ownerId;
 }
 
+/*
+ * Extracts authentication context from request headers.
+ * @param req The incoming request.
+ * @returns The authentication context or null if not present or invalid.
+ */
 export function getAuthContextFromRequest(
   req: NextRequest,
 ): AuthContext | null {
@@ -60,6 +82,10 @@ export function getAuthContextFromRequest(
   }
 }
 
+/*
+ * Returns an unauthorized response.
+ * @returns The unauthorized response.
+ */
 export function unauthorized() {
   return NextResponse.json(
     { error: "Unauthorized" },
@@ -67,6 +93,10 @@ export function unauthorized() {
   );
 }
 
+/*
+ * Returns a forbidden response.
+ * @returns The forbidden response.
+ */
 export function forbidden() {
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }
