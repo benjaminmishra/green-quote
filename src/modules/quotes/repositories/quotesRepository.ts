@@ -5,10 +5,21 @@ import { RepositoryError } from "@/shared/errors";
 
 export class QuotesRepositoryError extends RepositoryError {}
 
+const safeUserSelect = {
+  id: true,
+  email: true,
+  fullName: true,
+  role: true,
+  createdAt: true,
+} as const;
+
 export const quotesRepository = {
   async create(data: QuoteCreateData) {
     try {
-      return await prisma.quotes.create({ data, include: { user: true } });
+      return await prisma.quotes.create({
+        data,
+        include: { user: { select: safeUserSelect } },
+      });
     } catch (err) {
       throw new QuotesRepositoryError("Failed to create quote", {
         cause: err,
@@ -27,8 +38,8 @@ export const quotesRepository = {
 
       return await prisma.quotes.findMany({
         where: { userId },
-        include: { user: true },
-        orderBy: { createdAt: "desc" },
+        include: { user: { select: safeUserSelect } },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take,
         cursor,
         skip,
@@ -47,8 +58,8 @@ export const quotesRepository = {
       const skip = cursor ? 1 : undefined;
 
       return await prisma.quotes.findMany({
-        include: { user: true },
-        orderBy: { createdAt: "desc" },
+        include: { user: { select: safeUserSelect } },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take,
         cursor,
         skip,
@@ -64,7 +75,7 @@ export const quotesRepository = {
     try {
       return await prisma.quotes.findUnique({
         where: { id },
-        include: { user: true },
+        include: { user: { select: safeUserSelect } },
       });
     } catch (err) {
       throw new QuotesRepositoryError("Failed to find quote by id", {

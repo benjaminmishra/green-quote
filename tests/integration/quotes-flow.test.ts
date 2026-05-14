@@ -69,8 +69,8 @@ describe("Quotes Flow Integration", () => {
     const listRes = await listQuotesHandler(listReq);
     expect(listRes.status).toBe(200);
     const listData = await listRes.json();
-    expect(listData.length).toBe(1);
-    expect(listData[0].id).toBe(quoteId);
+    expect(listData.items.length).toBe(1);
+    expect(listData.items[0].id).toBe(quoteId);
 
     // 3. Get Specific Quote
     const getReq = new NextRequest(`http://localhost/api/quotes/${quoteId}`, {
@@ -114,7 +114,7 @@ describe("Quotes Flow Integration", () => {
     });
     const listRes = await listQuotesHandler(listReq);
     const listData = await listRes.json();
-    const quoteId = listData[0].id;
+    const quoteId = listData.items[0].id;
 
     // User B tries to read user A's quote
     const getReq = new NextRequest(`http://localhost/api/quotes/${quoteId}`, {
@@ -206,6 +206,6 @@ describe("Quotes Flow Integration", () => {
     expect(listRes.status).toBe(200);
     const listData = await listRes.json();
     // Should see both the quote created by user A and maybe others if any
-    expect(listData.length).toBeGreaterThan(0);
+    expect(listData.items.length).toBeGreaterThan(0);
   });
 });

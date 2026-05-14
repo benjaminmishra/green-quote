@@ -50,6 +50,19 @@ const mockAuthContext = {
   permissions: ["quotes:create", "quotes:read:own"] as any[],
 };
 
+const mockQuote = {
+  id: "q1",
+  userId: "u1",
+  address: "123 Test St",
+  monthlyConsumptionKwh: 1000,
+  systemSizeKw: { toString: () => "5.0" },
+  downPayment: { toString: () => "1000.0" },
+  systemPrice: { toString: () => "15000.0" },
+  riskBand: "A",
+  offers: [],
+  createdAt: new Date(),
+};
+
 describe("Quote Handlers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -182,7 +195,7 @@ describe("Quote Handlers", () => {
 
     it("returns 403 if user cannot read the quote", async () => {
       vi.mocked(quotesRepository.findById).mockResolvedValue({
-        id: "q1",
+        ...mockQuote,
         userId: "u2",
       } as any);
       vi.mocked(canReadQuote).mockReturnValue(false); // e.g. cross-user access
@@ -193,8 +206,7 @@ describe("Quote Handlers", () => {
 
     it("returns 200 and the quote on success", async () => {
       vi.mocked(quotesRepository.findById).mockResolvedValue({
-        id: "q1",
-        userId: "u1",
+        ...mockQuote,
       } as any);
       vi.mocked(canReadQuote).mockReturnValue(true);
       const req = new NextRequest("http://localhost/api/quotes/q1");
@@ -214,7 +226,7 @@ describe("Quote Handlers", () => {
     it("calls findManyByUser for standard users", async () => {
       vi.mocked(hasPermission).mockReturnValue(false); // no 'quotes:read:any'
       vi.mocked(quotesRepository.findManyByUser).mockResolvedValue([
-        { id: "q1" },
+        mockQuote,
       ] as any);
       const req = new NextRequest("http://localhost/api/quotes");
       const res = await listQuotesHandler(req);
@@ -229,8 +241,8 @@ describe("Quote Handlers", () => {
     it("calls findManyAll for admin users", async () => {
       vi.mocked(hasPermission).mockReturnValue(true); // user has 'quotes:read:any'
       vi.mocked(quotesRepository.findManyAll).mockResolvedValue([
-        { id: "q1" },
-        { id: "q2" },
+        mockQuote,
+        { ...mockQuote, id: "q2" },
       ] as any);
       const req = new NextRequest("http://localhost/api/quotes");
       const res = await listQuotesHandler(req);

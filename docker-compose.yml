@@ -1,6 +1,7 @@
 services:
   app:
-    build: .
+    image: node:20-alpine
+    working_dir: /app
     profiles:
       - app
     depends_on:
@@ -20,13 +21,16 @@ services:
     command: sh -c "npm ci && npm run dev -- -H 0.0.0.0"
 
   migrator:
-    build: .
+    image: node:20-alpine
+    working_dir: /app
     depends_on:
       db:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/greenquote?schema=public
-    command: sh -c "npx prisma migrate deploy && npm run prisma:seed"
+    command: sh -c "npm install && npx prisma migrate deploy && npm run prisma:seed"
+    volumes:
+      - .:/app
 
   db:
     image: postgres:16

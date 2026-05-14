@@ -17,6 +17,29 @@ import { withLogging } from "@/shared/withLogging";
 import { quoteCreateSchema } from "@/shared/schemas";
 import { ServiceError } from "@/shared/errors";
 
+function toQuoteResponse(quote: any) {
+  return {
+    id: quote.id,
+    userId: quote.userId,
+    address: quote.address,
+    monthlyConsumptionKwh: quote.monthlyConsumptionKwh,
+    systemSizeKw: quote.systemSizeKw.toString(),
+    downPayment: quote.downPayment.toString(),
+    systemPrice: quote.systemPrice.toString(),
+    riskBand: quote.riskBand,
+    offers: quote.offers,
+    createdAt: quote.createdAt,
+    user: quote.user
+      ? {
+          id: quote.user.id,
+          email: quote.user.email,
+          fullName: quote.user.fullName,
+          role: quote.user.role,
+        }
+      : undefined,
+  };
+}
+
 export const postQuoteHandler = withLogging(async function (req: NextRequest) {
   try {
     const auth = getAuthContextFromRequest(req);
@@ -111,8 +134,20 @@ export const listQuotesHandler = withLogging(async function (req: NextRequest) {
 
     const searchParams = req.nextUrl.searchParams;
     const limitParam = searchParams.get("limit");
+    let limit = 20;
+
+    if (limitParam !== null) {
+      const rawLimit = Number(limitParam);
+      if (!Number.isInteger(rawLimit) || rawLimit <= 0) {
+        return NextResponse.json(
+          { error: "Invalid limit parameter" },
+          { status: 400 },
+        );
+      }
+      limit = Math.min(rawLimit, 100);
+    }
+
     const cursor = searchParams.get("cursor") || undefined;
-    const limit = limitParam ? parseInt(limitParam, 10) : 20;
 
     const canReadAny =
       hasPermission(auth, "quotes:read:any") ||
@@ -121,7 +156,13 @@ export const listQuotesHandler = withLogging(async function (req: NextRequest) {
       ? await quotesRepository.findManyAll({ limit, cursor })
       : await quotesRepository.findManyByUser(auth.userId, { limit, cursor });
 
-    return NextResponse.json(quotes);
+    const nextCursor =
+      quotes.length === limit ? quotes[quotes.length - 1].id : null;
+
+    return NextResponse.json({
+      items: quotes.map(toQuoteResponse),
+      nextCursor,
+    });
   } catch (error) {
     getLogger().error({ err: error, msg: "Error listing quotes" });
     return NextResponse.json(
@@ -155,7 +196,7 @@ export const getQuoteHandler = withLogging(async function (
 
     if (!canReadQuote(auth, quote.userId)) return forbidden();
 
-    return NextResponse.json(quote);
+    return NextResponse.json(toQuoteResponse(quote));
   } catch (error) {
     getLogger().error({ err: error, msg: "Error getting quote" });
     return NextResponse.json(
