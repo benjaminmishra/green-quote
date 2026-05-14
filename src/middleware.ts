@@ -10,16 +10,11 @@ export async function middleware(req: NextRequest) {
   )
     return NextResponse.next();
 
-  let token: string | undefined;
-
   const authHeader = req.headers.get("authorization");
-  if (authHeader) {
-    if (authHeader.startsWith("Bearer ")) {
-      token = authHeader.substring(7).trim();
-    }
-  } else {
-    token = req.cookies.get("token")?.value;
-  }
+  let token = authHeader?.startsWith("Bearer ")
+    ? authHeader.substring(7).trim()
+    : undefined;
+  if (!token) token = req.cookies.get("token")?.value;
 
   const respondUnauthorized = () => {
     if (path.startsWith("/api")) {

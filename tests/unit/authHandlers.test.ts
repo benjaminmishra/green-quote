@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { loginHandler, registerHandler } from "@/modules/auth/api/handlers";
-import { AuthServiceError } from "@/modules/auth/services/authService";
-import { authService } from "@/modules/auth/services/authService";
+import {
+  authService,
+  EmailInUseError,
+  InvalidCredentialsError,
+} from "@/modules/auth/services/authService";
 
 vi.mock("@/modules/auth/services/authService", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/modules/auth/services/authService")>();
@@ -43,10 +46,8 @@ describe("Auth Handlers", () => {
       expect(json.error).toContain("valid name, email, and password");
     });
 
-    it("returns 409 for AuthServiceError 'Email already used'", async () => {
-      vi.mocked(authService.register).mockRejectedValue(
-        new AuthServiceError("Email already used")
-      );
+    it("returns 409 when email is already in use", async () => {
+      vi.mocked(authService.register).mockRejectedValue(new EmailInUseError());
       const req = new NextRequest("http://localhost/api/auth/register", {
         method: "POST",
         body: JSON.stringify({
@@ -85,9 +86,9 @@ describe("Auth Handlers", () => {
       expect(json.error).toContain("valid email and password");
     });
 
-    it("returns 401 for AuthServiceError 'Invalid credentials'", async () => {
+    it("returns 401 for invalid credentials", async () => {
       vi.mocked(authService.login).mockRejectedValue(
-        new AuthServiceError("Invalid credentials")
+        new InvalidCredentialsError(),
       );
       const req = new NextRequest("http://localhost/api/auth/login", {
         method: "POST",

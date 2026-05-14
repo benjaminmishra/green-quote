@@ -65,7 +65,7 @@ export function canReadQuote(ctx: AuthContext, ownerId: string): boolean {
   return hasPermission(ctx, "quotes:read:any") || ctx.userId === ownerId;
 }
 
-/*
+/**
  * Extracts authentication context from request headers.
  * @param req The incoming request.
  * @returns The authentication context or null if not present or invalid.
@@ -82,7 +82,7 @@ export function getAuthContextFromRequest(
   }
 }
 
-/*
+/**
  * Returns an unauthorized response.
  * @returns The unauthorized response.
  */
@@ -93,7 +93,7 @@ export function unauthorized() {
   );
 }
 
-/*
+/**
  * Returns a forbidden response.
  * @returns The forbidden response.
  */

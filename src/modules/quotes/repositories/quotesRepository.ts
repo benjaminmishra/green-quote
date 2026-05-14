@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import type { QuoteCreateData } from "../models/repository";
 
 import { RepositoryError } from "@/shared/errors";
-import { safeUserSelect } from "../api/dto";
+import { safeUserSelect } from "../models/userProjection";
 
 export class QuotesRepositoryError extends RepositoryError {}
 export class QuotesInvalidCursorError extends QuotesRepositoryError {}

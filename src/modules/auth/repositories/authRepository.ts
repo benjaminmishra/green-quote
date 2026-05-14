@@ -4,6 +4,7 @@ import { prisma } from "@/shared/db";
 import { RepositoryError } from "@/shared/errors";
 
 export class AuthRepositoryError extends RepositoryError {}
+export class AuthEmailInUseError extends AuthRepositoryError {}
 
 function isUniqueConstraintError(err: unknown) {
   return (
@@ -31,7 +32,7 @@ export const authRepository = {
       return await prisma.users.create({ data });
     } catch (err) {
       if (isUniqueConstraintError(err)) {
-        throw new AuthRepositoryError("Email already used", { cause: err });
+        throw new AuthEmailInUseError("Email already used", { cause: err });
       }
 
       throw new AuthRepositoryError("Failed to create user", { cause: err });
