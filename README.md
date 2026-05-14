@@ -33,14 +33,20 @@ Please refer to the [ARCHITECTURE.md](ARCHITECTURE.md) document for a detailed e
 
 Please refer to the [APIREFERENCE.md](APIREFERENCE.md) document for details on available endpoints and how to access the interactive OpenAPI documentation.
 
-## Production Readiness
+## What to do next
 
-To harden the application for a large-scale production deployment, the following steps are required:
+Ideally the next step is to make this application production-ready. To harden the application for a production deployment, the following steps are required:
 
 1. **Authentication (OIDC/JWKS)**: Swap out the custom authentication module for a robust Identity Provider like Keycloak. JWT validation should be updated to enforce issuer, audience, token type, and key rotation via JWKS. The boot-time secret-strength check in `src/instrumentation.ts` is a minimum bar — it does not replace proper key management.
+
 2. **Secrets Management**: Sensitive configuration values and database credentials should be stored in a secure vault (e.g., AWS Secrets Manager or HashiCorp Vault) and injected into the runtime environment.
+
 3. **Database Migrations**: The current setup automatically runs `prisma migrate deploy` on local startup for convenience. In production, migrations should be managed as a distinct deployment phase (e.g., via a CI/CD job or an init container) independent of the application server startup.
+
 4. **Deployment & Scaling**: Utilize the multi-stage `Dockerfile` for creating optimized production images. Deploy behind a load balancer and a CDN for static assets. Scale horizontally as needed.
+
 5. **Observability**: Add correlation/request IDs to logs and implement comprehensive distributed tracing and metrics monitoring.
+
 6. **E2E Testing**: Integrate Playwright to simulate actual user journeys in a headless browser.
+
 7. **Result/Error Pattern**: Adopt a functional `Result<T, E>` pattern to safely propagate and exhaustively handle domain errors as the application scales.
