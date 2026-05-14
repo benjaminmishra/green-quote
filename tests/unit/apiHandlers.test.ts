@@ -116,8 +116,6 @@ describe("Quote Handlers", () => {
       const req = new NextRequest("http://localhost/api/quotes", {
         method: "POST",
         body: JSON.stringify({
-          fullName: "Test User",
-          email: "test@test.com",
           address: "123",
           monthlyConsumptionKwh: 1000,
           systemSizeKw: 5,
@@ -135,8 +133,6 @@ describe("Quote Handlers", () => {
       const req = new NextRequest("http://localhost/api/quotes", {
         method: "POST",
         body: JSON.stringify({
-          fullName: "Test User",
-          email: "test@test.com",
           address: "123",
           monthlyConsumptionKwh: 1000,
           systemSizeKw: 5,
@@ -156,8 +152,6 @@ describe("Quote Handlers", () => {
       const req = new NextRequest("http://localhost/api/quotes", {
         method: "POST",
         body: JSON.stringify({
-          fullName: "Test User",
-          email: "test@test.com",
           address: "123",
           monthlyConsumptionKwh: 1000,
           systemSizeKw: 5,
@@ -225,7 +219,10 @@ describe("Quote Handlers", () => {
       const req = new NextRequest("http://localhost/api/quotes");
       const res = await listQuotesHandler(req);
       expect(res.status).toBe(200);
-      expect(quotesRepository.findManyByUser).toHaveBeenCalledWith("u1");
+      expect(quotesRepository.findManyByUser).toHaveBeenCalledWith("u1", {
+        limit: 20,
+        cursor: undefined,
+      });
       expect(quotesRepository.findManyAll).not.toHaveBeenCalled();
     });
 

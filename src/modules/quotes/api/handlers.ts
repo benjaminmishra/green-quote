@@ -58,10 +58,10 @@ export const postQuoteHandler = withLogging(async function (req: NextRequest) {
 
     const priced = calculatePricing(
       body.systemSizeKw,
-      body.monthlyConsumptionKwh,
       body.downPayment ?? 0,
       riskBandRow.apr,
       termOptions,
+      riskBand,
     );
     const quote = await quotesRepository.create({
       userId: auth.userId,
@@ -109,12 +109,17 @@ export const listQuotesHandler = withLogging(async function (req: NextRequest) {
     if (!auth) return unauthorized();
     getLogger().info({ "user.id": auth.userId, msg: "Listing quotes" });
 
+    const searchParams = req.nextUrl.searchParams;
+    const limitParam = searchParams.get("limit");
+    const cursor = searchParams.get("cursor") || undefined;
+    const limit = limitParam ? parseInt(limitParam, 10) : 20;
+
     const canReadAny =
       hasPermission(auth, "quotes:read:any") ||
       hasPermission(auth, "admin:quotes:read");
     const quotes = canReadAny
-      ? await quotesRepository.findManyAll()
-      : await quotesRepository.findManyByUser(auth.userId);
+      ? await quotesRepository.findManyAll({ limit, cursor })
+      : await quotesRepository.findManyByUser(auth.userId, { limit, cursor });
 
     return NextResponse.json(quotes);
   } catch (error) {

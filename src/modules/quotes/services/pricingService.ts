@@ -28,24 +28,23 @@ export function determineRiskBand(
  * APR comes from the RiskBands table, term options come from the LoanTerms table.
  * This function is pure — no DB access.
  * @param systemSizeKw System size in kilowatts.
- * @param monthlyConsumptionKwh Monthly consumption in kilowatt-hours.
  * @param downPayment Down payment in dollars.
  * @param apr Annual percentage rate.
  * @param termOptions Array of loan terms in years.
+ * @param riskBand The calculated risk band.
  * @returns Object containing system price, principal, risk band, and offers.
  */
 export function calculatePricing(
   systemSizeKw: Decimal.Value,
-  monthlyConsumptionKwh: number,
   downPayment: Decimal.Value,
   apr: Decimal.Value,
   termOptions: number[],
+  riskBand: RiskBand,
 ) {
   const size = new Decimal(systemSizeKw);
   const down = new Decimal(downPayment);
   const systemPrice = size.mul(1200);
   const principal = Decimal.max(systemPrice.minus(down), 0);
-  const riskBand = determineRiskBand(monthlyConsumptionKwh, systemSizeKw);
 
   const aprDec = new Decimal(apr);
 

@@ -1,0 +1,26 @@
+# API Reference
+
+The GreenQuote application features an auto-rendered OpenAPI documentation page generated directly from Zod schemas using `@asteasolutions/zod-to-openapi` and `swagger-ui-react`.
+
+## Interactive API Docs
+
+When running the application locally, you can access the interactive Swagger UI documentation at:
+[`/api-docs`](http://localhost:3000/api-docs)
+
+## Available Endpoints
+
+### Health
+- **`GET /api/health`**: Returns the health status of the application.
+
+### Authentication
+- **`POST /api/auth/register`**: Registers a new user. Requires `fullName`, `email`, and `password`.
+- **`POST /api/auth/login`**: Authenticates a user and sets a secure HttpOnly JWT cookie. Requires `email` and `password`.
+
+### Quotes
+*Note: All quote endpoints require authentication (JWT cookie or Bearer token).*
+
+- **`POST /api/quotes`**: Creates a new solar quote pre-qualification. Requires `address`, `monthlyConsumptionKwh`, `systemSizeKw`, and optionally `downPayment`. (Requires `quotes:create` permission)
+- **`GET /api/quotes`**: Retrieves a paginated list of quotes. 
+  - Supports query parameters: `?limit=20&cursor=<quote_id>`
+  - Regular users see their own quotes. Admins (with `quotes:read:any` or `admin:quotes:read` permission) see all quotes.
+- **`GET /api/quotes/:id`**: Retrieves details for a specific quote by its ID. Users can only read their own quotes unless they have admin permissions.

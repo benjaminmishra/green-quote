@@ -20,8 +20,6 @@ import {
 } from "./quoteStyles";
 
 const schema = z.object({
-  fullName: z.string(),
-  email: z.string().email(),
   address: z.string().min(3),
   monthlyConsumptionKwh: z.coerce.number().positive(),
   systemSizeKw: z.coerce.number().positive(),
@@ -29,10 +27,8 @@ const schema = z.object({
 });
 
 export function QuoteForm({
-  user,
   onBack,
 }: {
-  user?: { fullName?: string | null; email?: string | null };
   onBack?: () => void;
 }) {
   const [res, setRes] = useState<QuoteResponse | null>(null);
@@ -115,25 +111,6 @@ export function QuoteForm({
               gap: "16px",
             }}
           >
-            <label style={labelStyle}>
-              Full Name
-              <input
-                name="fullName"
-                defaultValue={user?.fullName || "Current User"}
-                readOnly
-                style={readOnlyInputStyle}
-              />
-            </label>
-            <label style={labelStyle}>
-              Email Address
-              <input
-                name="email"
-                defaultValue={user?.email || "user@test.com"}
-                readOnly
-                style={readOnlyInputStyle}
-              />
-            </label>
-
             <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>
               Installation Address
               <input

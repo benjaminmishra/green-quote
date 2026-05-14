@@ -16,12 +16,22 @@ export const quotesRepository = {
     }
   },
 
-  async findManyByUser(userId: string) {
+  async findManyByUser(
+    userId: string,
+    options?: { limit?: number; cursor?: string },
+  ) {
     try {
+      const take = options?.limit;
+      const cursor = options?.cursor ? { id: options.cursor } : undefined;
+      const skip = cursor ? 1 : undefined;
+
       return await prisma.quotes.findMany({
         where: { userId },
         include: { user: true },
         orderBy: { createdAt: "desc" },
+        take,
+        cursor,
+        skip,
       });
     } catch (err) {
       throw new QuotesRepositoryError("Failed to find quotes by user", {
@@ -30,11 +40,18 @@ export const quotesRepository = {
     }
   },
 
-  async findManyAll() {
+  async findManyAll(options?: { limit?: number; cursor?: string }) {
     try {
+      const take = options?.limit;
+      const cursor = options?.cursor ? { id: options.cursor } : undefined;
+      const skip = cursor ? 1 : undefined;
+
       return await prisma.quotes.findMany({
         include: { user: true },
         orderBy: { createdAt: "desc" },
+        take,
+        cursor,
+        skip,
       });
     } catch (err) {
       throw new QuotesRepositoryError("Failed to find quotes", {

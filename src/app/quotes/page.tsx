@@ -24,7 +24,7 @@ export default async function Page() {
         <h2 style={{ margin: 0 }}>My Quotes</h2>
         <LogoutButton />
       </header>
-      <QuotesDashboard user={auth} />
+      <QuotesDashboard />
     </div>
   );
 }

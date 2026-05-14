@@ -131,4 +131,81 @@ describe("Quotes Flow Integration", () => {
     const getRes = await getQuoteHandler(getReq, quoteId);
     expect(getRes.status).toBe(403);
   });
+
+  it("returns 401 when unauthenticated", async () => {
+    const getReq = new NextRequest(`http://localhost/api/quotes/some-id`, {
+      method: "GET",
+    });
+    const getRes = await getQuoteHandler(getReq, "some-id");
+    expect(getRes.status).toBe(401);
+  });
+
+  it("returns 400 for validation failure (missing address)", async () => {
+    const postReq = new NextRequest("http://localhost/api/quotes", {
+      method: "POST",
+      headers: {
+        "x-auth-context": JSON.stringify({
+          userId,
+          role: "USER",
+          permissions: ["quotes:create", "quotes:read:own"],
+        }),
+      },
+      body: JSON.stringify({
+        monthlyConsumptionKwh: 1200,
+        systemSizeKw: 8,
+      }),
+    });
+
+    const postRes = await postQuoteHandler(postReq);
+    expect(postRes.status).toBe(400);
+    const data = await postRes.json();
+    expect(data.error).toBe("Validation failed");
+  });
+
+  it("returns 400 for malformed JSON payload", async () => {
+    const postReq = new NextRequest("http://localhost/api/quotes", {
+      method: "POST",
+      headers: {
+        "x-auth-context": JSON.stringify({
+          userId,
+          role: "USER",
+          permissions: ["quotes:create", "quotes:read:own"],
+        }),
+      },
+      body: "invalid json {",
+    });
+
+    const postRes = await postQuoteHandler(postReq);
+    expect(postRes.status).toBe(400);
+    const data = await postRes.json();
+    expect(data.error).toBe("Invalid JSON payload");
+  });
+
+  it("allows admin to read all quotes", async () => {
+    const admin = await prisma.users.create({
+      data: {
+        email: "admin-user@test.com",
+        fullName: "Admin User",
+        passwordHash: "hash",
+        role: "ADMIN",
+      },
+    });
+
+    const listReq = new NextRequest("http://localhost/api/quotes", {
+      method: "GET",
+      headers: {
+        "x-auth-context": JSON.stringify({
+          userId: admin.id,
+          role: "ADMIN",
+          permissions: ["quotes:create", "quotes:read:any", "admin:quotes:read"],
+        }),
+      },
+    });
+
+    const listRes = await listQuotesHandler(listReq);
+    expect(listRes.status).toBe(200);
+    const listData = await listRes.json();
+    // Should see both the quote created by user A and maybe others if any
+    expect(listData.length).toBeGreaterThan(0);
+  });
 });

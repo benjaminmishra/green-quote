@@ -3,15 +3,11 @@ import { useState } from "react";
 import { QuoteForm } from "./QuoteForm";
 import { QuotesTable } from "./QuotesTable";
 
-export function QuotesDashboard({
-  user,
-}: {
-  user?: { fullName?: string | null; email?: string | null };
-}) {
+export function QuotesDashboard() {
   const [isCreating, setIsCreating] = useState(false);
 
   if (isCreating) {
-    return <QuoteForm user={user} onBack={() => setIsCreating(false)} />;
+    return <QuoteForm onBack={() => setIsCreating(false)} />;
   }
 
   return (

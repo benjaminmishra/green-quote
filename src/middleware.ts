@@ -27,6 +27,7 @@ export async function middleware(req: NextRequest) {
   try {
     const auth = await verifyToken(token);
     const requestHeaders = new Headers(req.headers);
+    requestHeaders.delete("x-auth-context");
     requestHeaders.set("x-auth-context", JSON.stringify(auth));
     return NextResponse.next({ request: { headers: requestHeaders } });
   } catch {

@@ -23,7 +23,14 @@ export const authService = {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    return authRepository.createUser({ fullName, email, passwordHash });
+    try {
+      return await authRepository.createUser({ fullName, email, passwordHash });
+    } catch (err) {
+      if (err instanceof Error && err.message === "Email already used") {
+        throw new AuthServiceError("Email already used");
+      }
+      throw err;
+    }
   },
 
   /*

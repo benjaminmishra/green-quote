@@ -14,52 +14,29 @@ Next.js App Router + Prisma/PostgreSQL app for solar quote pre-qualification.
 3. Install deps: `npm install`
 4. Run app locally: `npm run dev`
 
-To run the app through Docker instead, use `docker compose --profile app up`.
+*Note: The included `docker-compose.yml` and `Dockerfile` are intended for local development convenience. For production deployments, please use the `Dockerfile.prod` multi-stage build.*
 
-## Test
+## Validation & Testing
 
-- `npm run test`
+- `npm run typecheck` (Checks TypeScript typings)
+- `npm run test` (Runs both unit and integration tests)
 
-## Some Architectural Decisions
+## Architecture
 
-- **Vertical Slice**: domain modules in `src/modules/auth` and `src/modules/quotes`.
-- **Next.js app** only contains routing and route handlers in `src/app`.
-- **Schemas & Validation**: Zod client/server.
-- **Pricing Model Calculations**: Decimal.js used in pricing service for high precision.
-- **Authentication**: email/password + JWT in secure HttpOnly cookie.
+Please refer to the [ARCHITECTURE.md](ARCHITECTURE.md) document for a detailed explanation of architectural decisions, module boundaries and engineering trade-offs.
 
 ## API Reference
 
-The application features an auto-rendered OpenAPI documentation page generated directly from Zod schemas using `@asteasolutions/zod-to-openapi` and `swagger-ui-react`.
+Please refer to the [APIREFERENCE.md](APIREFERENCE.md) document for details on available endpoints and how to access the interactive OpenAPI documentation.
 
-- **Interactive API Docs**: Available at [`/api-docs`](http://localhost:3000/api-docs) when running locally.
+## Production Readiness
 
-Endpoints covered:
-- `GET /api/health`
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/quotes`
-- `GET /api/quotes`
-- `GET /api/quotes/:id`
+To harden the application for a large-scale production deployment, the following steps are required:
 
-## RBAC
-
-- Roles: `USER`, `ADMIN`.
-- Permission-based checks are used (`quotes:create`, `quotes:read:own`, `quotes:read:any`, `admin:quotes:read`).
-- JWT payload supports future Keycloak-style claims mapping (`realm_access.roles`) in `verifyToken`.
-
-## Trade-offs
-
-- **Monolith over Microservices**: Built as a modular monolith within the Next.js App Router for simplicity and speed. Separating the frontend and backend would add unnecessary operational overhead for this stage.
-- **Client-side Fetching**: Used standard client-side `fetch` in React components instead of Next.js Server Actions. While Server Actions reduce boilerplate, standard API routes ensure a clean separation between the UI and the API layer, making the API independently testable and consumable.
-- **Custom Auth vs External IdP**: Implemented custom email/password authentication (with bcrypt + JWT) to minimize external dependencies. Integrating an external IdP like Keycloak was deferred to keep the local setup fast, though the JWT validation layer is built to easily adapt to standard IdP claims.
-- **Vertical Slicing**: Code is organized by feature domains (`auth`, `quotes`) rather than technical concern (controllers, services, models). This makes the codebase easier to navigate but can lead to slight duplication of shared utilities.
-
-## What to do next
-
-To harden the app for a large-scale production deployment, the following steps are recommended:
-
-1. **IdP Integration**: Swap out the custom authentication module for a robust Identity Provider like Keycloak for enterprise-grade identity management.
-2. **E2E Testing**: Integrate Playwright to simulate actual user journeys in a headless browser (e.g., User Sign Up -> Fill Quote Form -> See Results -> Admin Review).
-3. **Result/Error Pattern**: Stop throwing exceptions for expected business logic failures (like validation errors). Instead, adopt a functional `Result<T, E>` pattern to safely propagate and exhaustively handle domain errors as the application scales.
-4. **Master Data Admin UI**: Build the remaining bonus features (Amortization schedule, PDF export) and create an Admin UI panel to dynamically update the pricing master data (Risk Bands, APRs, Loan Terms) without needing database migrations.
+1. **Authentication (OIDC/JWKS)**: Swap out the custom authentication module for a robust Identity Provider like Keycloak. JWT validation should be updated to enforce issuer, audience, token type, and key rotation via JWKS.
+2. **Secrets Management**: Sensitive configuration values and database credentials should be stored in a secure vault (e.g., AWS Secrets Manager or HashiCorp Vault) and injected into the runtime environment.
+3. **Database Migrations**: The current setup automatically runs `prisma migrate deploy` on local startup for convenience. In production, migrations should be managed as a distinct deployment phase (e.g., via a CI/CD job or an init container) independent of the application server startup.
+4. **Deployment & Scaling**: Utilize the multi-stage `Dockerfile.prod` for creating optimized production images. Deploy behind a load balancer and a CDN for static assets. Scale horizontally as needed.
+5. **Observability**: Add correlation/request IDs to logs and implement comprehensive distributed tracing and metrics monitoring.
+6. **E2E Testing**: Integrate Playwright to simulate actual user journeys in a headless browser.
+7. **Result/Error Pattern**: Adopt a functional `Result<T, E>` pattern to safely propagate and exhaustively handle domain errors as the application scales.

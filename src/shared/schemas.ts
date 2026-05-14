@@ -12,8 +12,6 @@ export const authRegisterSchema = z.object({
 export const authLoginSchema = authRegisterSchema.pick({ email: true, password: true }).openapi("AuthLogin");
 
 export const quoteCreateSchema = z.object({
-  fullName: z.string().min(1).openapi({ example: "John Doe" }),
-  email: z.string().email().openapi({ example: "john@example.com" }),
   address: z.string().min(3).openapi({ example: "123 Solar Way" }),
   monthlyConsumptionKwh: z.number().int().positive().openapi({ example: 500 }),
   systemSizeKw: z.number().positive().openapi({ example: 5 }),
