@@ -24,7 +24,7 @@ export function QuotesTable({ admin = false }: { admin?: boolean }) {
         return r.json();
       })
       .then((data) => {
-        setQuotes(data);
+        setQuotes(data.items ?? []);
         setError(null);
       })
       .catch((err) => {
